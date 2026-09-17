@@ -22,10 +22,15 @@ import { GisProjectMap } from './components/gis/GisProjectMap';
 import { ReportsModule } from './components/reports/ReportsModule';
 import { NotificationsModule } from './components/notifications/NotificationsModule';
 import { AdministrationModule } from './components/admin/AdministrationModule';
+import { PasscodeGate } from './components/auth/PasscodeGate';
 
 import { Sparkles, HelpCircle } from 'lucide-react';
 
-const MainContent: React.FC = () => {
+interface MainContentProps {
+  onLock: () => void;
+}
+
+const MainContent: React.FC<MainContentProps> = ({ onLock }) => {
   const { currentNav, selectedProjectId, setSelectedProjectId, projects } = useApp();
   const [showScenariosModal, setShowScenariosModal] = useState(false);
 
@@ -74,7 +79,7 @@ const MainContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans flex flex-col">
-      <Header />
+      <Header onLock={onLock} />
 
       <div className="flex flex-1 relative">
         <Sidebar />
@@ -126,9 +131,39 @@ const MainContent: React.FC = () => {
 };
 
 export default function App() {
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('gudm_plms_passcode_unlocked') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleUnlock = () => {
+    try {
+      sessionStorage.setItem('gudm_plms_passcode_unlocked', 'true');
+    } catch {
+      // ignore storage errors
+    }
+    setIsUnlocked(true);
+  };
+
+  const handleLock = () => {
+    try {
+      sessionStorage.removeItem('gudm_plms_passcode_unlocked');
+    } catch {
+      // ignore storage errors
+    }
+    setIsUnlocked(false);
+  };
+
+  if (!isUnlocked) {
+    return <PasscodeGate onUnlock={handleUnlock} />;
+  }
+
   return (
     <AppProvider>
-      <MainContent />
+      <MainContent onLock={handleLock} />
     </AppProvider>
   );
 }

@@ -11,10 +11,15 @@ import {
   UserCheck,
   Calendar,
   Layers,
-  ChevronDown
+  ChevronDown,
+  Lock
 } from 'lucide-react';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onLock?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onLock }) => {
   const {
     currentRole,
     setCurrentRole,
@@ -88,6 +93,17 @@ export const Header: React.FC = () => {
           </button>
           {resetFeedback && (
             <span className="text-emerald-300 font-medium animate-pulse">State Reset!</span>
+          )}
+
+          {onLock && (
+            <button
+              onClick={onLock}
+              title="Lock portal and return to passcode verification gate"
+              className="flex items-center space-x-1 text-slate-300 hover:text-amber-300 px-2 py-0.5 rounded hover:bg-[#123e6b] transition-colors border-l border-slate-700 pl-2"
+            >
+              <Lock className="w-3 h-3 text-amber-400" />
+              <span>Lock Gate</span>
+            </button>
           )}
         </div>
       </div>
