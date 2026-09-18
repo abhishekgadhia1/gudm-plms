@@ -275,7 +275,8 @@ export const GisProjectMap: React.FC = () => {
                 <div className="flex justify-between">
                   <span className="text-slate-500">GIS Coordinates:</span>
                   <span className="font-mono text-slate-700">
-                    {activePinProject.coordinates.lat.toFixed(4)}° N, {activePinProject.coordinates.lng.toFixed(4)}° E
+                    {typeof activePinProject.coordinates?.lat === 'number' ? activePinProject.coordinates.lat.toFixed(4) : (Number(activePinProject.coordinates?.lat) || 0).toFixed(4)}° N,{' '}
+                    {typeof activePinProject.coordinates?.lng === 'number' ? activePinProject.coordinates.lng.toFixed(4) : (Number(activePinProject.coordinates?.lng) || 0).toFixed(4)}° E
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -284,7 +285,9 @@ export const GisProjectMap: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Approved Outlay:</span>
-                  <span className="font-bold text-slate-900">₹ {activePinProject.approvedCost.toFixed(2)} Cr</span>
+                  <span className="font-bold text-slate-900">
+                    ₹ {(Number(activePinProject.approvedCost) || 0).toFixed(2)} Cr
+                  </span>
                 </div>
               </div>
 
@@ -304,7 +307,7 @@ export const GisProjectMap: React.FC = () => {
                   <div className="flex justify-between text-[11px] mb-1">
                     <span className="text-slate-600 font-medium">Financial Expenditure Released</span>
                     <span className="font-bold text-emerald-800">
-                      ₹ {activePinProject.expenditure.toFixed(2)} Cr ({activePinProject.financialProgress}%)
+                      ₹ {(Number(activePinProject.expenditure) || 0).toFixed(2)} Cr ({activePinProject.financialProgress}%)
                     </span>
                   </div>
                   <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">

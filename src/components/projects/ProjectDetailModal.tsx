@@ -372,7 +372,8 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
               <div>
                 <span className="text-slate-500 font-medium block">Coordinates (GIS)</span>
                 <span className="font-mono text-slate-700">
-                  {project.coordinates.lat.toFixed(4)}° N, {project.coordinates.lng.toFixed(4)}° E
+                  {typeof project.coordinates?.lat === 'number' ? project.coordinates.lat.toFixed(4) : (Number(project.coordinates?.lat) || 0).toFixed(4)}° N,{' '}
+                  {typeof project.coordinates?.lng === 'number' ? project.coordinates.lng.toFixed(4) : (Number(project.coordinates?.lng) || 0).toFixed(4)}° E
                 </span>
               </div>
 
@@ -612,11 +613,15 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({ project,
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-4 rounded-lg border border-slate-200 text-xs">
               <div>
                 <span className="text-slate-500 font-medium block">Approved Outlay</span>
-                <span className="text-xl font-bold text-slate-900">₹ {project.approvedCost.toFixed(2)} Cr</span>
+                <span className="text-xl font-bold text-slate-900">
+                  ₹ {(Number(project.approvedCost) || 0).toFixed(2)} Cr
+                </span>
               </div>
               <div>
                 <span className="text-slate-500 font-medium block">Total Expenditure Released</span>
-                <span className="text-xl font-bold text-emerald-800">₹ {project.expenditure.toFixed(2)} Cr</span>
+                <span className="text-xl font-bold text-emerald-800">
+                  ₹ {(Number(project.expenditure) || 0).toFixed(2)} Cr
+                </span>
               </div>
               <div>
                 <span className="text-slate-500 font-medium block">Financial Progress</span>

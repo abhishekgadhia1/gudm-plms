@@ -103,7 +103,7 @@ export const ProjectPlanning: React.FC = () => {
                       <span className="text-[11px] text-slate-500">{p.ulb}</span>
                     </td>
                     <td className="py-3 px-3 text-right font-mono font-bold text-slate-800">
-                      ₹ {p.estimatedCost.toFixed(1)} Cr
+                      ₹ {(Number(p.estimatedCost) || 0).toFixed(1)} Cr
                     </td>
                     <td className="py-3 px-3">
                       <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-900 font-semibold text-[11px] border border-blue-200">

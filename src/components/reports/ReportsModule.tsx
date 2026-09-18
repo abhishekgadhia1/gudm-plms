@@ -179,26 +179,33 @@ export const ReportsModule: React.FC = () => {
             ) : selectedReportId === 'RPT-05' ? (
               /* Financial Utilisation report */
               <div className="space-y-3 text-xs">
-                <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded border border-slate-200">
-                  <div>
-                    <span className="text-slate-500 block text-[10px] uppercase font-bold">Total Approved</span>
-                    <span className="text-base font-bold text-slate-900">
-                      ₹ {projects.reduce((a, b) => a + b.approvedCost, 0).toFixed(2)} Cr
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block text-[10px] uppercase font-bold">Total Disbursed</span>
-                    <span className="text-base font-bold text-emerald-800">
-                      ₹ {projects.reduce((a, b) => a + b.expenditure, 0).toFixed(2)} Cr
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block text-[10px] uppercase font-bold">Utilisation Rate</span>
-                    <span className="text-base font-bold text-blue-900">
-                      {((projects.reduce((a, b) => a + b.expenditure, 0) / projects.reduce((a, b) => a + b.approvedCost, 0)) * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
+                {(() => {
+                  const totalApproved = projects.reduce((a, b) => a + (Number(b.approvedCost) || 0), 0);
+                  const totalExp = projects.reduce((a, b) => a + (Number(b.expenditure) || 0), 0);
+                  const utilRate = totalApproved > 0 ? (totalExp / totalApproved) * 100 : 0;
+                  return (
+                    <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded border border-slate-200">
+                      <div>
+                        <span className="text-slate-500 block text-[10px] uppercase font-bold">Total Approved</span>
+                        <span className="text-base font-bold text-slate-900">
+                          ₹ {totalApproved.toFixed(2)} Cr
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[10px] uppercase font-bold">Total Disbursed</span>
+                        <span className="text-base font-bold text-emerald-800">
+                          ₹ {totalExp.toFixed(2)} Cr
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[10px] uppercase font-bold">Utilisation Rate</span>
+                        <span className="text-base font-bold text-blue-900">
+                          {utilRate.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
@@ -216,9 +223,13 @@ export const ReportsModule: React.FC = () => {
                         <tr key={p.id}>
                           <td className="py-2 px-2.5 font-mono font-bold text-blue-900">{p.id}</td>
                           <td className="py-2 px-2.5 font-semibold text-slate-800 line-clamp-1">{p.name}</td>
-                          <td className="py-2 px-2.5 text-right font-mono">₹{p.approvedCost.toFixed(2)} Cr</td>
-                          <td className="py-2 px-2.5 text-right font-mono font-bold text-emerald-800">₹{p.expenditure.toFixed(2)} Cr</td>
-                          <td className="py-2 px-2.5 text-center font-bold text-blue-900">{p.financialProgress}%</td>
+                          <td className="py-2 px-2.5 text-right font-mono">
+                            ₹{(Number(p.approvedCost) || 0).toFixed(2)} Cr
+                          </td>
+                          <td className="py-2 px-2.5 text-right font-mono font-bold text-emerald-800">
+                            ₹{(Number(p.expenditure) || 0).toFixed(2)} Cr
+                          </td>
+                          <td className="py-2 px-2.5 text-center font-bold text-blue-900">{p.financialProgress || 0}%</td>
                         </tr>
                       ))}
                     </tbody>

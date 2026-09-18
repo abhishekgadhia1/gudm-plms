@@ -18,7 +18,9 @@ import {
 
 export const ContractManagement: React.FC = () => {
   const { contracts, updateContractVariation } = useApp();
-  const [selectedContract, setSelectedContract] = useState<ContractRecord | null>(contracts[0] || null);
+  const [selectedContractId, setSelectedContractId] = useState<string>(contracts[0]?.id || '');
+
+  const selectedContract = contracts.find(c => c.id === selectedContractId) || contracts[0] || null;
 
   // Variation / EOT Modal
   const [showVariationModal, setShowVariationModal] = useState(false);
@@ -68,7 +70,7 @@ export const ContractManagement: React.FC = () => {
             {contracts.map(cnt => (
               <div
                 key={cnt.id}
-                onClick={() => setSelectedContract(cnt)}
+                onClick={() => setSelectedContractId(cnt.id)}
                 className={`p-3.5 cursor-pointer text-xs transition-colors hover:bg-slate-50 ${
                   selectedContract?.id === cnt.id ? 'bg-blue-50/70 border-l-4 border-blue-800' : ''
                 }`}
@@ -86,8 +88,10 @@ export const ContractManagement: React.FC = () => {
                 <h4 className="font-semibold text-slate-900 line-clamp-1">{cnt.contractorName}</h4>
                 <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">{cnt.projectName}</p>
                 <div className="mt-2 flex items-center justify-between text-[11px] text-slate-600">
-                  <span className="font-bold text-slate-800">₹ {cnt.contractValue.toFixed(2)} Cr</span>
-                  <span>WO: {cnt.workOrderNo}</span>
+                  <span className="font-bold text-slate-800">
+                    ₹ {typeof cnt.contractValue === 'number' ? cnt.contractValue.toFixed(2) : (Number(cnt.contractValue) || 0).toFixed(2)} Cr
+                  </span>
+                  <span>WO: {cnt.workOrderNumber || '—'}</span>
                 </div>
               </div>
             ))}
@@ -126,30 +130,30 @@ export const ContractManagement: React.FC = () => {
               {/* Financial & Statutory Info */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
                 <div>
-                  <span className="text-slate-500 block">Original Contract Value</span>
-                  <span className="font-bold text-slate-900 text-sm">
-                    ₹ {selectedContract.originalContractValue.toFixed(2)} Cr
+                  <span className="text-slate-500 block">Work Order Number</span>
+                  <span className="font-bold text-slate-900 text-xs font-mono">
+                    {selectedContract.workOrderNumber || '—'}
                   </span>
                 </div>
 
                 <div>
                   <span className="text-slate-500 block">Current Contract Value</span>
                   <span className="font-bold text-blue-900 text-sm">
-                    ₹ {selectedContract.contractValue.toFixed(2)} Cr
+                    ₹ {(Number(selectedContract.contractValue) || 0).toFixed(2)} Cr
                   </span>
                 </div>
 
                 <div>
                   <span className="text-slate-500 block">Performance Security (PBG)</span>
                   <span className="font-semibold text-slate-800">
-                    ₹ {selectedContract.performanceSecurityAmount.toFixed(2)} Cr
+                    ₹ {(Number(selectedContract.performanceSecurity?.amount) || 0).toFixed(2)} Cr
                   </span>
                 </div>
 
                 <div>
                   <span className="text-slate-500 block">Bank Guarantee Validity</span>
                   <span className="font-semibold text-emerald-800">
-                    {selectedContract.performanceSecurityExpiry}
+                    {selectedContract.performanceSecurity?.validTill || '—'}
                   </span>
                 </div>
               </div>
@@ -161,16 +165,16 @@ export const ContractManagement: React.FC = () => {
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-slate-600">
                   <div>
-                    <span className="text-slate-400 block text-[10px]">Registered Address:</span>
-                    <span>{selectedContract.contractorAddress}</span>
+                    <span className="text-slate-400 block text-[10px]">Contractor PAN / GSTIN:</span>
+                    <span className="font-mono font-bold text-slate-800">{selectedContract.contractorPanGst || '—'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px]">GSTIN / Registration:</span>
-                    <span className="font-mono font-bold text-slate-800">{selectedContract.contractorGst}</span>
+                    <span className="text-slate-400 block text-[10px]">Guarantee Bank:</span>
+                    <span className="font-medium text-slate-800">{selectedContract.performanceSecurity?.bankName || '—'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px]">Authorised Contact:</span>
-                    <span>{selectedContract.contractorContact}</span>
+                    <span className="text-slate-400 block text-[10px]">BG Reference Number:</span>
+                    <span className="font-mono font-semibold text-slate-700">{selectedContract.performanceSecurity?.bgNumber || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -181,33 +185,23 @@ export const ContractManagement: React.FC = () => {
                   Stipulated Milestones & Linked Disbursements
                 </h4>
                 <div className="space-y-1.5 text-xs">
-                  {selectedContract.milestones.map((m, idx) => (
-                    <div
-                      key={m.id}
-                      className="p-2 bg-slate-50 rounded border border-slate-200 flex items-center justify-between"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-slate-700">{idx + 1}.</span>
-                        <div>
-                          <span className="font-semibold text-slate-900 block">{m.title}</span>
-                          <span className="text-[11px] text-slate-500">
-                            Planned Target: {m.targetDate} &bull; Payment linked: {m.paymentPercentage}% of contract
-                          </span>
-                        </div>
-                      </div>
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          m.status === 'Completed'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : m.status === 'Under Way'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-slate-100 text-slate-600'
-                        }`}
-                      >
-                        {m.status}
+                  <div className="p-2.5 bg-slate-50 rounded border border-slate-200 space-y-1">
+                    <div className="flex items-center justify-between text-slate-700 font-semibold">
+                      <span>Total Milestone Phases: {selectedContract.milestonesCount || 4}</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                        {selectedContract.status}
                       </span>
                     </div>
-                  ))}
+                    <p className="text-[11px] text-slate-600">
+                      <span className="font-medium text-slate-700">Payment Terms: </span>
+                      {selectedContract.paymentTerms || 'Monthly Running Account (RA) bills against certified measurement book entries.'}
+                    </p>
+                    <div className="flex items-center space-x-4 text-[11px] text-slate-500 pt-1">
+                      <span>Start Date: {selectedContract.startDate || '—'}</span>
+                      <span>Scheduled Completion: {selectedContract.scheduledEndDate || '—'}</span>
+                      <span>EOT Granted: {selectedContract.extensionOfTimeDays || 0} Days</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -216,7 +210,7 @@ export const ContractManagement: React.FC = () => {
                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2">
                   Approved Variation Orders & Time Extensions (EOT)
                 </h4>
-                {selectedContract.variationOrders.length === 0 ? (
+                {(!selectedContract.variationOrders || selectedContract.variationOrders.length === 0) ? (
                   <p className="text-slate-500 text-xs italic bg-slate-50 p-2.5 rounded">
                     No variation orders or time extensions granted to date. Execution within original mandate.
                   </p>
@@ -226,13 +220,13 @@ export const ContractManagement: React.FC = () => {
                       <div key={vo.id} className="p-2.5 bg-amber-50/70 rounded border border-amber-200 space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="font-mono font-bold text-amber-900">{vo.id}</span>
-                          <span className="text-slate-500 text-[11px]">Approved on: {vo.date}</span>
+                          <span className="text-slate-500 text-[11px]">Approved on: {vo.approvedDate || '—'}</span>
                         </div>
-                        <p className="text-slate-800 font-medium">{vo.reason}</p>
+                        <p className="text-slate-800 font-medium">{vo.description}</p>
                         <div className="flex items-center space-x-4 text-[11px] text-slate-600 font-semibold">
-                          <span>Cost Impact: +₹{vo.additionalCost.toFixed(2)} Cr</span>
-                          <span>Time Impact: +{vo.additionalDays} Days</span>
-                          <span className="text-emerald-800">Status: {vo.status}</span>
+                          <span>Cost Impact: +₹{(Number(vo.amountDelta) || 0).toFixed(2)} Cr</span>
+                          <span>Time Impact: +{vo.timeExtensionDays || 0} Days</span>
+                          <span className="text-emerald-800">Status: Sanctioned</span>
                         </div>
                       </div>
                     ))}

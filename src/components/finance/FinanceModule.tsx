@@ -16,11 +16,11 @@ import {
 export const FinanceModule: React.FC = () => {
   const { projects, setSelectedProjectId } = useApp();
 
-  const totalSanctioned = projects.reduce((acc, p) => acc + p.approvedCost, 0);
-  const totalExpenditure = projects.reduce((acc, p) => acc + p.expenditure, 0);
-  const totalCommitted = projects.reduce((acc, p) => acc + p.committedCost, 0);
+  const totalSanctioned = projects.reduce((acc, p) => acc + (Number(p.approvedCost) || 0), 0);
+  const totalExpenditure = projects.reduce((acc, p) => acc + (Number(p.expenditure) || 0), 0);
+  const totalCommitted = projects.reduce((acc, p) => acc + (Number(p.committedCost) || 0), 0);
   const unspentBalance = totalSanctioned - totalExpenditure;
-  const overallUtilisation = (totalExpenditure / totalSanctioned) * 100;
+  const overallUtilisation = totalSanctioned > 0 ? (totalExpenditure / totalSanctioned) * 100 : 0;
 
   // Mock Bills Table (Requirement L)
   const mockBills = [
@@ -158,9 +158,15 @@ export const FinanceModule: React.FC = () => {
                   <td className="py-2.5 px-3 font-mono font-bold text-blue-900">{p.id}</td>
                   <td className="py-2.5 px-3 font-semibold text-slate-800 line-clamp-1">{p.name}</td>
                   <td className="py-2.5 px-3 text-slate-600 text-[11px]">{p.fundingSource}</td>
-                  <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-800">₹ {p.approvedCost.toFixed(2)} Cr</td>
-                  <td className="py-2.5 px-3 text-right font-mono text-slate-700">₹ {p.committedCost.toFixed(2)} Cr</td>
-                  <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-800">₹ {p.expenditure.toFixed(2)} Cr</td>
+                  <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-800">
+                    ₹ {(Number(p.approvedCost) || 0).toFixed(2)} Cr
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-mono text-slate-700">
+                    ₹ {(Number(p.committedCost) || 0).toFixed(2)} Cr
+                  </td>
+                  <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-800">
+                    ₹ {(Number(p.expenditure) || 0).toFixed(2)} Cr
+                  </td>
                   <td className="py-2.5 px-3 text-center">
                     <div className="inline-flex items-center space-x-1">
                       <div className="w-12 bg-slate-200 h-1.5 rounded-full overflow-hidden">

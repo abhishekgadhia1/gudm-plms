@@ -3,12 +3,14 @@ import { Lock, ArrowRight } from 'lucide-react';
 
 interface PasscodeGateProps {
   onUnlock: () => void;
+  onComplete?: () => void;
 }
 
-export const PasscodeGate: React.FC<PasscodeGateProps> = ({ onUnlock }) => {
+export const PasscodeGate: React.FC<PasscodeGateProps> = ({ onUnlock, onComplete }) => {
   const [pin, setPin] = useState('');
   const [isError, setIsError] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -19,15 +21,22 @@ export const PasscodeGate: React.FC<PasscodeGateProps> = ({ onUnlock }) => {
     if (code === '7788') {
       setIsError(false);
       setIsSuccess(true);
+      onUnlock();
+
+      // Graceful pacing: let the 4th dot clearly appear and turn emerald, then dissolve even slower & smoother
       setTimeout(() => {
-        onUnlock();
-      }, 200);
+        setIsExiting(true);
+      }, 400);
+
+      setTimeout(() => {
+        onComplete?.();
+      }, 1900);
     } else if (code.length >= 4) {
       setIsError(true);
       setTimeout(() => {
         setPin('');
         setIsError(false);
-      }, 600);
+      }, 500);
     }
   };
 
@@ -49,13 +58,17 @@ export const PasscodeGate: React.FC<PasscodeGateProps> = ({ onUnlock }) => {
 
   return (
     <div
-      className="min-h-screen bg-slate-950 flex items-center justify-center p-4 selection:bg-slate-700"
+      className={`fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4 selection:bg-slate-700 transition-all duration-[1400ms] ease-[cubic-bezier(0.25,1,0.35,1)] ${
+        isExiting ? 'opacity-0 pointer-events-none' : 'opacity-100'
+      }`}
       onClick={() => inputRef.current?.focus()}
     >
       <form
         onSubmit={handleSubmit}
-        className={`w-full max-w-xs bg-slate-900 border rounded-2xl p-6 shadow-2xl transition-all duration-300 ${
-          isError
+        className={`w-full max-w-xs bg-slate-900 border rounded-2xl p-6 shadow-2xl transition-all duration-[1400ms] ease-[cubic-bezier(0.25,1,0.35,1)] transform ${
+          isExiting
+            ? 'scale-[0.96] opacity-0 -translate-y-1.5 border-emerald-500/80 shadow-emerald-500/20'
+            : isError
             ? 'border-red-500/60 shadow-red-500/10 animate-shake'
             : isSuccess
             ? 'border-emerald-500/70 shadow-emerald-500/10 scale-[1.02]'
@@ -64,7 +77,7 @@ export const PasscodeGate: React.FC<PasscodeGateProps> = ({ onUnlock }) => {
       >
         <div className="flex flex-col items-center">
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center mb-5 transition-colors ${
+            className={`w-10 h-10 rounded-full flex items-center justify-center mb-5 transition-colors duration-300 ${
               isError
                 ? 'bg-red-500/10 text-red-400'
                 : isSuccess
@@ -82,7 +95,7 @@ export const PasscodeGate: React.FC<PasscodeGateProps> = ({ onUnlock }) => {
               return (
                 <div
                   key={idx}
-                  className={`w-11 h-12 rounded-xl border flex items-center justify-center transition-all duration-200 ${
+                  className={`w-11 h-12 rounded-xl border flex items-center justify-center transition-all duration-300 ease-out ${
                     isError
                       ? 'border-red-500/60 bg-red-500/10'
                       : isSuccess
@@ -94,12 +107,12 @@ export const PasscodeGate: React.FC<PasscodeGateProps> = ({ onUnlock }) => {
                 >
                   {hasChar && (
                     <span
-                      className={`w-2.5 h-2.5 rounded-full ${
+                      className={`w-2.5 h-2.5 rounded-full transition-all duration-200 ease-out transform ${
                         isError
                           ? 'bg-red-400'
                           : isSuccess
-                          ? 'bg-emerald-400'
-                          : 'bg-white'
+                          ? 'bg-emerald-400 scale-110'
+                          : 'bg-white scale-100'
                       }`}
                     />
                   )}

@@ -96,6 +96,7 @@ interface AppContextType {
     remarks: string
   ) => void;
   uploadDocument: (docData: Partial<DocumentRecord>) => DocumentRecord;
+  updateContractVariation: (contractId: string, additionalCost: number, additionalDays: number, reason: string) => void;
   completeProject: (projectId: string, handoverNotes: string) => void;
   markNotificationRead: (id: string) => void;
   resetDemoData: () => void;
@@ -112,7 +113,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentRole, setCurrentRole] = useState<UserRole>('Super Administrator');
   const [currentNav, setCurrentNav] = useState<string>('Dashboard');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [fiscalYear, setFiscalYear] = useState<string>('FY 2024-25');
+  const [fiscalYear, setFiscalYear] = useState<string>('FY 2026-27');
 
   // Stored states with fallback
   const [projects, setProjects] = useState<ProjectMaster[]>(() => {
@@ -726,7 +727,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return newDoc;
   };
 
-  // 12. Mark Project Completed
+  // 12. Update Contract Variation / EOT
+  const updateContractVariation = (
+    contractId: string,
+    additionalCost: number,
+    additionalDays: number,
+    reason: string
+  ) => {
+    setContracts(prev =>
+      prev.map(cnt => {
+        if (cnt.id !== contractId) return cnt;
+        const count = cnt.variationOrders.length + 1;
+        const voId = `VO-${String(count).padStart(2, '0')}`;
+        const newVo = {
+          id: voId,
+          description: reason || 'Variation Order sanctioned by competent authority',
+          amountDelta: Number(additionalCost) || 0,
+          timeExtensionDays: Number(additionalDays) || 0,
+          approvedDate: new Date().toISOString().substring(0, 10)
+        };
+        const updatedVal = Math.round(((cnt.contractValue || 0) + (Number(additionalCost) || 0)) * 100) / 100;
+        const updatedEot = (cnt.extensionOfTimeDays || 0) + (Number(additionalDays) || 0);
+
+        return {
+          ...cnt,
+          contractValue: updatedVal,
+          extensionOfTimeDays: updatedEot,
+          variationOrders: [...cnt.variationOrders, newVo],
+          status: 'Under Variation'
+        };
+      })
+    );
+  };
+
+  // 13. Mark Project Completed
   const completeProject = (projectId: string, handoverNotes: string) => {
     setProjects(prev =>
       prev.map(p => {
@@ -808,6 +842,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       submitApproval,
       handleApprovalAction,
       uploadDocument,
+      updateContractVariation,
       completeProject,
       markNotificationRead,
       resetDemoData,

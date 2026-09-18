@@ -152,8 +152,10 @@ export const RfpManagement: React.FC = () => {
                 </div>
                 <h4 className="font-semibold text-slate-900 line-clamp-2 leading-snug">{rfp.title}</h4>
                 <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
-                  <span className="font-bold text-slate-700">₹ {rfp.estimatedCost.toFixed(1)} Cr</span>
-                  <span>{rfp.bids.length} Bids Received</span>
+                  <span className="font-bold text-slate-700">
+                    ₹ {(Number(rfp.estimatedCost) || 0).toFixed(1)} Cr
+                  </span>
+                  <span>{rfp.bids?.length || 0} Bids Received</span>
                 </div>
               </div>
             ))}
@@ -213,12 +215,14 @@ export const RfpManagement: React.FC = () => {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs border-t border-slate-100 pt-3">
                 <div>
                   <span className="text-slate-500 block">Estimated Cost</span>
-                  <span className="font-bold text-slate-800 text-sm">₹ {selectedRfp.estimatedCost.toFixed(2)} Cr</span>
+                  <span className="font-bold text-slate-800 text-sm">
+                    ₹ {(Number(selectedRfp.estimatedCost) || 0).toFixed(2)} Cr
+                  </span>
                 </div>
                 <div>
                   <span className="text-slate-500 block">Tender Fee / EMD</span>
                   <span className="font-medium text-slate-800">
-                    ₹ {selectedRfp.tenderFee} / ₹ {(selectedRfp.emdAmount / 100000).toFixed(1)} L
+                    ₹ {selectedRfp.tenderFee} / ₹ {((Number(selectedRfp.emdAmount) || 0) / 100000).toFixed(1)} L
                   </span>
                 </div>
                 <div>
@@ -313,10 +317,10 @@ export const RfpManagement: React.FC = () => {
                             </span>
                           </td>
                           <td className="py-2.5 px-3 text-center font-bold text-slate-800">
-                            {bid.technicalScore.toFixed(1)}
+                            {(Number(bid.technicalScore) || 0).toFixed(1)}
                           </td>
                           <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
-                            ₹ {bid.financialBidAmount.toFixed(2)} Cr
+                            ₹ {(Number(bid.financialBidAmount) || 0).toFixed(2)} Cr
                           </td>
                           <td className="py-2.5 px-3 text-center">
                             <span

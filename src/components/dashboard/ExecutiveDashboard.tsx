@@ -37,9 +37,9 @@ export const ExecutiveDashboard: React.FC = () => {
   const completed = projects.filter(p => p.currentStatus === 'Completed').length;
   const delayed = projects.filter(p => p.currentStatus === 'Delayed' || p.delayDays > 0).length;
 
-  const totalApprovedCost = projects.reduce((acc, p) => acc + p.approvedCost, 0);
-  const totalExpenditure = projects.reduce((acc, p) => acc + p.expenditure, 0);
-  const totalCommitted = projects.reduce((acc, p) => acc + p.committedCost, 0);
+  const totalApprovedCost = projects.reduce((acc, p) => acc + (Number(p.approvedCost) || 0), 0);
+  const totalExpenditure = projects.reduce((acc, p) => acc + (Number(p.expenditure) || 0), 0);
+  const totalCommitted = projects.reduce((acc, p) => acc + (Number(p.committedCost) || 0), 0);
   const budgetUtilisation = totalApprovedCost > 0 ? (totalExpenditure / totalApprovedCost) * 100 : 0;
 
   const criticalAndHighRisks = projects.filter(
@@ -64,8 +64,8 @@ export const ExecutiveDashboard: React.FC = () => {
     if (!categorySummary[p.category]) {
       categorySummary[p.category] = { approved: 0, spent: 0 };
     }
-    categorySummary[p.category].approved += p.approvedCost;
-    categorySummary[p.category].spent += p.expenditure;
+    categorySummary[p.category].approved += Number(p.approvedCost) || 0;
+    categorySummary[p.category].spent += Number(p.expenditure) || 0;
   });
 
   const categories = Object.keys(categorySummary).slice(0, 5);
@@ -175,7 +175,9 @@ export const ExecutiveDashboard: React.FC = () => {
             <span className="text-xs font-semibold uppercase text-slate-600">Total Approved Outlay</span>
             <IndianRupee className="w-4 h-4 text-slate-500" />
           </div>
-          <div className="text-2xl font-bold text-slate-900">₹ {totalApprovedCost.toFixed(1)} <span className="text-sm font-normal text-slate-600">Cr</span></div>
+          <div className="text-2xl font-bold text-slate-900">
+            ₹ {(Number(totalApprovedCost) || 0).toFixed(1)} <span className="text-sm font-normal text-slate-600">Cr</span>
+          </div>
           <div className="text-[11px] text-slate-500 mt-1">SJMMSVY, AMRUT 2.0 & WB Funds</div>
         </div>
 
@@ -184,20 +186,22 @@ export const ExecutiveDashboard: React.FC = () => {
             <span className="text-xs font-semibold uppercase text-slate-600">Total Expenditure</span>
             <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-2xl font-bold text-emerald-800">₹ {totalExpenditure.toFixed(1)} <span className="text-sm font-normal text-slate-600">Cr</span></div>
+          <div className="text-2xl font-bold text-emerald-800">
+            ₹ {(Number(totalExpenditure) || 0).toFixed(1)} <span className="text-sm font-normal text-slate-600">Cr</span>
+          </div>
           <div className="text-[11px] text-slate-500 mt-1">Verified via Treasury & RA Bills</div>
         </div>
 
         <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-slate-500 mb-1">
             <span className="text-xs font-semibold uppercase text-slate-600">Budget Utilisation</span>
-            <span className="text-xs font-bold text-blue-700">{budgetUtilisation.toFixed(1)}%</span>
+            <span className="text-xs font-bold text-blue-700">{(Number(budgetUtilisation) || 0).toFixed(1)}%</span>
           </div>
-          <div className="text-2xl font-bold text-blue-900">{budgetUtilisation.toFixed(1)}%</div>
+          <div className="text-2xl font-bold text-blue-900">{(Number(budgetUtilisation) || 0).toFixed(1)}%</div>
           <div className="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
             <div
               className="bg-blue-700 h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, budgetUtilisation)}%` }}
+              style={{ width: `${Math.min(100, Math.max(0, Number(budgetUtilisation) || 0))}%` }}
             />
           </div>
         </div>
@@ -300,16 +304,18 @@ export const ExecutiveDashboard: React.FC = () => {
           <div className="space-y-3 flex-1 flex flex-col justify-center">
             {categories.map(cat => {
               const data = categorySummary[cat];
+              const approvedVal = Number(data?.approved) || 0;
+              const spentVal = Number(data?.spent) || 0;
               const maxBudget = 300; // max scale
-              const approvedPct = Math.min(100, (data.approved / maxBudget) * 100);
-              const spentPct = Math.min(100, (data.spent / maxBudget) * 100);
+              const approvedPct = Math.min(100, (approvedVal / maxBudget) * 100);
+              const spentPct = Math.min(100, (spentVal / maxBudget) * 100);
 
               return (
                 <div key={cat} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-medium text-slate-800 truncate max-w-xs">{cat}</span>
                     <span className="text-slate-600 text-[11px]">
-                      ₹{data.spent.toFixed(1)} Cr / ₹{data.approved.toFixed(1)} Cr
+                      ₹{spentVal.toFixed(1)} Cr / ₹{approvedVal.toFixed(1)} Cr
                     </span>
                   </div>
                   <div className="relative h-4 bg-slate-100 rounded-xs overflow-hidden">

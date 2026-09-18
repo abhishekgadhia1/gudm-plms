@@ -139,6 +139,14 @@ export default function App() {
     }
   });
 
+  const [showGate, setShowGate] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('gudm_plms_passcode_unlocked') !== 'true';
+    } catch {
+      return true;
+    }
+  });
+
   const handleUnlock = () => {
     try {
       sessionStorage.setItem('gudm_plms_passcode_unlocked', 'true');
@@ -148,6 +156,10 @@ export default function App() {
     setIsUnlocked(true);
   };
 
+  const handleGateComplete = () => {
+    setShowGate(false);
+  };
+
   const handleLock = () => {
     try {
       sessionStorage.removeItem('gudm_plms_passcode_unlocked');
@@ -155,15 +167,18 @@ export default function App() {
       // ignore storage errors
     }
     setIsUnlocked(false);
+    setShowGate(true);
   };
-
-  if (!isUnlocked) {
-    return <PasscodeGate onUnlock={handleUnlock} />;
-  }
 
   return (
     <AppProvider>
       <MainContent onLock={handleLock} />
+      {showGate && (
+        <PasscodeGate
+          onUnlock={handleUnlock}
+          onComplete={handleGateComplete}
+        />
+      )}
     </AppProvider>
   );
 }
