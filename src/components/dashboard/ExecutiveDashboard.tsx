@@ -107,116 +107,222 @@ export const ExecutiveDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Row 1: Primary KPI Stat Cards (Structured Government Enterprise Grid) */}
+      {/* Row 1: Primary KPI Stat Cards - Project Lifecycle Progression */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {/* Total Schemes */}
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Total Schemes</span>
-            <FolderGit2 className="w-4 h-4 text-blue-800" />
+        {/* Total Schemes - Anchor Card */}
+        <div className="bg-[#0E355C] text-white p-3.5 rounded-lg border border-[#0A2744] shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-200">Total Schemes</span>
+            <div className="p-1.5 rounded-md bg-white/10 text-amber-300">
+              <FolderGit2 className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900">{totalProjects}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Across 8 Urban Sectors</div>
+          <div className="my-1.5">
+            <div className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">{totalProjects}</div>
+            <div className="text-[10px] text-slate-300 font-medium">Active Portfolio</div>
+          </div>
+          <div className="pt-1.5 border-t border-white/10 flex items-center justify-between text-[10px] text-slate-300">
+            <span>Across 8 Sectors</span>
+            <span className="px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300 font-bold">100%</span>
+          </div>
         </div>
 
         {/* Planning & Sanction */}
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">In Planning</span>
-            <Clock className="w-4 h-4 text-blue-600" />
+        <div className="bg-white p-3.5 rounded-lg border border-slate-200 border-t-3 border-t-sky-500 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">In Planning</span>
+            <div className="p-1.5 rounded-md bg-sky-50 text-sky-700">
+              <Clock className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-blue-700">{inPlanning}</div>
-          <div className="text-[10px] text-slate-500 mt-1">DPR / AS / TS in pipeline</div>
+          <div className="my-1.5">
+            <div className="text-2xl font-bold text-sky-800">{inPlanning}</div>
+            <div className="text-[10px] text-slate-500">DPR / AS / TS Pipeline</div>
+          </div>
+          <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px]">
+            <span className="text-slate-500">Share of Total</span>
+            <span className="font-bold text-sky-700 font-mono">
+              {totalProjects > 0 ? ((inPlanning / totalProjects) * 100).toFixed(0) : 0}%
+            </span>
+          </div>
         </div>
 
         {/* Under Tendering */}
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Under RFP</span>
-            <FileText className="w-4 h-4 text-purple-600" />
+        <div className="bg-white p-3.5 rounded-lg border border-slate-200 border-t-3 border-t-purple-500 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Under RFP</span>
+            <div className="p-1.5 rounded-md bg-purple-50 text-purple-700">
+              <FileText className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-purple-700">{underRfp}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Tenders invited / Evaluated</div>
+          <div className="my-1.5">
+            <div className="text-2xl font-bold text-purple-800">{underRfp}</div>
+            <div className="text-[10px] text-slate-500">Bids & Evaluation</div>
+          </div>
+          <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px]">
+            <span className="text-slate-500">Share of Total</span>
+            <span className="font-bold text-purple-700 font-mono">
+              {totalProjects > 0 ? ((underRfp / totalProjects) * 100).toFixed(0) : 0}%
+            </span>
+          </div>
         </div>
 
         {/* Awarded / WO */}
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Awarded</span>
-            <Briefcase className="w-4 h-4 text-indigo-600" />
+        <div className="bg-white p-3.5 rounded-lg border border-slate-200 border-t-3 border-t-indigo-500 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Awarded</span>
+            <div className="p-1.5 rounded-md bg-indigo-50 text-indigo-700">
+              <Briefcase className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-indigo-700">{awarded}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Contracts & Work Orders</div>
+          <div className="my-1.5">
+            <div className="text-2xl font-bold text-indigo-800">{awarded}</div>
+            <div className="text-[10px] text-slate-500">Work Orders Issued</div>
+          </div>
+          <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px]">
+            <span className="text-slate-500">Share of Total</span>
+            <span className="font-bold text-indigo-700 font-mono">
+              {totalProjects > 0 ? ((awarded / totalProjects) * 100).toFixed(0) : 0}%
+            </span>
+          </div>
         </div>
 
         {/* Under Execution */}
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">In Execution</span>
-            <Layers className="w-4 h-4 text-emerald-600" />
+        <div className="bg-white p-3.5 rounded-lg border border-slate-200 border-t-3 border-t-amber-500 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">In Execution</span>
+            <div className="p-1.5 rounded-md bg-amber-50 text-amber-700">
+              <Layers className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-emerald-700">{inExecution}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Active site construction</div>
+          <div className="my-1.5">
+            <div className="text-2xl font-bold text-amber-800">{inExecution}</div>
+            <div className="text-[10px] text-slate-500">Active Construction</div>
+          </div>
+          <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px]">
+            <span className="text-slate-500">Share of Total</span>
+            <span className="font-bold text-amber-700 font-mono">
+              {totalProjects > 0 ? ((inExecution / totalProjects) * 100).toFixed(0) : 0}%
+            </span>
+          </div>
         </div>
 
         {/* Completed */}
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Completed</span>
-            <CheckCircle2 className="w-4 h-4 text-teal-600" />
+        <div className="bg-white p-3.5 rounded-lg border border-slate-200 border-t-3 border-t-emerald-600 shadow-2xs flex flex-col justify-between hover:shadow-xs transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Completed</span>
+            <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-700">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-teal-700">{completed}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Handed over to ULBs</div>
+          <div className="my-1.5">
+            <div className="text-2xl font-bold text-emerald-800">{completed}</div>
+            <div className="text-[10px] text-slate-500">Handed Over to ULBs</div>
+          </div>
+          <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px]">
+            <span className="text-slate-500">Share of Total</span>
+            <span className="font-bold text-emerald-700 font-mono">
+              {totalProjects > 0 ? ((completed / totalProjects) * 100).toFixed(0) : 0}%
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Row 2: Financial Envelope Cards */}
+      {/* Row 2: Financial Envelope & Outlay Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-semibold uppercase text-slate-600">Total Approved Outlay</span>
-            <IndianRupee className="w-4 h-4 text-slate-500" />
+        {/* Approved Outlay */}
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Total Approved Outlay</span>
+            <div className="p-2 rounded-lg bg-blue-50 text-blue-800">
+              <IndianRupee className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-slate-900">
-            ₹ {(Number(totalApprovedCost) || 0).toFixed(1)} <span className="text-sm font-normal text-slate-600">Cr</span>
+          <div className="my-2">
+            <div className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+              ₹ {(Number(totalApprovedCost) || 0).toFixed(1)} <span className="text-sm font-semibold text-slate-500 font-sans">Cr</span>
+            </div>
+            <div className="text-[11px] text-slate-500 mt-0.5">SJMMSVY, AMRUT 2.0 &amp; World Bank</div>
           </div>
-          <div className="text-[11px] text-slate-500 mt-1">SJMMSVY, AMRUT 2.0 & WB Funds</div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-semibold uppercase text-slate-600">Total Expenditure</span>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="text-2xl font-bold text-emerald-800">
-            ₹ {(Number(totalExpenditure) || 0).toFixed(1)} <span className="text-sm font-normal text-slate-600">Cr</span>
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">Verified via Treasury & RA Bills</div>
-        </div>
-
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-semibold uppercase text-slate-600">Budget Utilisation</span>
-            <span className="text-xs font-bold text-blue-700">{(Number(budgetUtilisation) || 0).toFixed(1)}%</span>
-          </div>
-          <div className="text-2xl font-bold text-blue-900">{(Number(budgetUtilisation) || 0).toFixed(1)}%</div>
-          <div className="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
-            <div
-              className="bg-blue-700 h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.min(100, Math.max(0, Number(budgetUtilisation) || 0))}%` }}
-            />
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500">Committed:</span>
+            <span className="font-semibold text-slate-800 font-mono">₹ {(Number(totalCommitted) || 0).toFixed(1)} Cr</span>
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-xs font-semibold uppercase text-rose-800 font-bold">Projects At Risk / Delayed</span>
-            <AlertTriangle className="w-4 h-4 text-rose-600" />
+        {/* Total Expenditure */}
+        <div className="bg-white p-4 rounded-lg border border-emerald-200/80 bg-gradient-to-b from-white to-emerald-50/20 shadow-2xs flex flex-col justify-between hover:border-emerald-300 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">Total Expenditure</span>
+            <div className="p-2 rounded-lg bg-emerald-100 text-emerald-800">
+              <TrendingUp className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-bold text-rose-700">
-            {delayed} <span className="text-sm font-normal text-slate-600">Delayed</span> / {criticalAndHighRisks.length} <span className="text-sm font-normal text-slate-600">High Risk</span>
+          <div className="my-2">
+            <div className="text-2xl lg:text-3xl font-extrabold text-emerald-900 tracking-tight">
+              ₹ {(Number(totalExpenditure) || 0).toFixed(1)} <span className="text-sm font-semibold text-emerald-700 font-sans">Cr</span>
+            </div>
+            <div className="text-[11px] text-emerald-700/90 mt-0.5">Verified via Treasury &amp; RA Bills</div>
           </div>
-          <div className="text-[11px] text-rose-600 font-medium mt-1">Requires Departmental Review</div>
+          <div className="pt-2 border-t border-emerald-100 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500">Disbursed Share:</span>
+            <span className="font-bold text-emerald-800 font-mono">
+              {(Number(budgetUtilisation) || 0).toFixed(1)}% of Outlay
+            </span>
+          </div>
+        </div>
+
+        {/* Budget Utilisation */}
+        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Budget Utilisation</span>
+            <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-blue-50 text-blue-800 border border-blue-200">
+              {(Number(budgetUtilisation) || 0).toFixed(1)}%
+            </span>
+          </div>
+          <div className="my-2">
+            <div className="text-2xl lg:text-3xl font-extrabold text-blue-900 tracking-tight">
+              {(Number(budgetUtilisation) || 0).toFixed(1)}%
+            </div>
+            <div className="w-full bg-slate-100 h-2.5 rounded-full mt-2 overflow-hidden border border-slate-200/60">
+              <div
+                className="bg-blue-700 h-full rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(0, Number(budgetUtilisation) || 0))}%` }}
+              />
+            </div>
+          </div>
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500">Remaining Balance:</span>
+            <span className="font-semibold text-slate-800 font-mono">
+              ₹ {Math.max(0, totalApprovedCost - totalExpenditure).toFixed(1)} Cr
+            </span>
+          </div>
+        </div>
+
+        {/* Projects At Risk / Delayed */}
+        <div className="bg-white p-4 rounded-lg border border-rose-200/90 bg-rose-50/20 shadow-2xs flex flex-col justify-between hover:border-rose-300 transition-colors">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-rose-800">Projects At Risk</span>
+            <div className="p-2 rounded-lg bg-rose-100 text-rose-700">
+              <AlertTriangle className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="my-2">
+            <div className="text-2xl lg:text-3xl font-extrabold text-rose-700 tracking-tight flex items-baseline gap-2">
+              <span>{delayed}</span>
+              <span className="text-sm font-semibold text-slate-600">Delayed</span>
+              <span className="text-slate-300 font-normal">|</span>
+              <span>{criticalAndHighRisks.length}</span>
+              <span className="text-sm font-semibold text-slate-600">Critical</span>
+            </div>
+            <div className="text-[11px] text-rose-700 font-medium mt-0.5">Slippage &amp; clearance issues flagged</div>
+          </div>
+          <div className="pt-2 border-t border-rose-100 flex items-center justify-between text-[11px]">
+            <span className="text-rose-700 font-medium">Status:</span>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">
+              Action Required
+            </span>
+          </div>
         </div>
       </div>
 
