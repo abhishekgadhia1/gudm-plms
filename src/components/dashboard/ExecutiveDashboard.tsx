@@ -46,7 +46,9 @@ export const ExecutiveDashboard: React.FC = () => {
     p => p.riskLevel === 'Critical' || p.riskLevel === 'High'
   );
 
-  const delayedProjects = projects.filter(p => p.delayDays > 0);
+  const delayedProjects = projects
+    .filter(p => p.delayDays > 0)
+    .sort((a, b) => b.delayDays - a.delayDays);
 
   // Status chart distribution data
   const statusDistribution = [
@@ -93,7 +95,7 @@ export const ExecutiveDashboard: React.FC = () => {
               className="inline-flex items-center px-3 py-1.5 text-xs font-semibold rounded bg-[#0E355C] text-white hover:bg-[#092644] transition-colors"
             >
               <FolderGit2 className="w-3.5 h-3.5 mr-1.5" />
-              Open Project Master
+              Project Registry
             </button>
             <button
               onClick={() => setCurrentNav('Reports')}
@@ -218,120 +220,57 @@ export const ExecutiveDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Row 3: Visual Analytics (Custom SVG Charts) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Chart 1: Project Status Distribution Donut */}
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs flex flex-col">
-          <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+      {/* Row 3: Sector-wise Allocation vs Expenditure */}
+      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+          <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-              Project Status Distribution
+              Sector-wise Financial Allocation vs Expenditure
             </h3>
-            <span className="text-[11px] text-slate-500">{totalProjects} Projects</span>
+            <p className="text-[11px] text-slate-500">Overview of key urban infrastructure sectors in ₹ Crores</p>
           </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-around flex-1 py-2">
-            {/* SVG Donut */}
-            <div className="relative w-36 h-36 flex-shrink-0">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="14" fill="none" stroke="#F1F5F9" strokeWidth="4" />
-                {(() => {
-                  let accumulatedPercent = 0;
-                  return statusDistribution.map((item, i) => {
-                    const percent = totalProjects > 0 ? (item.count / totalProjects) * 100 : 0;
-                    if (percent === 0) return null;
-                    const strokeDasharray = `${percent} ${100 - percent}`;
-                    const strokeDashoffset = -accumulatedPercent;
-                    accumulatedPercent += percent;
-                    return (
-                      <circle
-                        key={i}
-                        cx="18"
-                        cy="18"
-                        r="14"
-                        fill="none"
-                        stroke={item.color}
-                        strokeWidth="4"
-                        strokeDasharray={strokeDasharray}
-                        strokeDashoffset={strokeDashoffset}
-                        className="transition-all duration-300 hover:opacity-80"
-                      />
-                    );
-                  });
-                })()}
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xs text-slate-500 font-medium">Active</span>
-                <span className="text-lg font-bold text-slate-800">{inExecution + awarded}</span>
-              </div>
+          <div className="flex items-center space-x-4 text-xs">
+            <div className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 bg-blue-800 rounded-xs" />
+              <span className="text-slate-600 text-[11px]">Approved Outlay</span>
             </div>
-
-            {/* Legend List */}
-            <div className="mt-3 sm:mt-0 space-y-1 text-xs w-full sm:w-auto">
-              {statusDistribution.map(item => (
-                <div key={item.label} className="flex items-center justify-between space-x-3">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-slate-600">{item.label}</span>
-                  </div>
-                  <span className="font-bold text-slate-800">{item.count}</span>
-                </div>
-              ))}
+            <div className="flex items-center space-x-1.5">
+              <span className="w-2.5 h-2.5 bg-emerald-600 rounded-xs" />
+              <span className="text-slate-600 text-[11px]">Expenditure Released</span>
             </div>
           </div>
         </div>
 
-        {/* Chart 2: Sector-wise Approved Cost vs Expenditure */}
-        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-2xs lg:col-span-2 flex flex-col">
-          <div className="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-                Sector-wise Financial Allocation vs Expenditure (₹ Cr)
-              </h3>
-              <p className="text-[10px] text-slate-500">Top urban infrastructure development categories</p>
-            </div>
-            <div className="flex items-center space-x-3 text-xs">
-              <div className="flex items-center space-x-1.5">
-                <span className="w-3 h-2.5 bg-blue-800 rounded-xs" />
-                <span className="text-slate-600 text-[11px]">Approved Outlay</span>
-              </div>
-              <div className="flex items-center space-x-1.5">
-                <span className="w-3 h-2.5 bg-emerald-600 rounded-xs" />
-                <span className="text-slate-600 text-[11px]">Expenditure</span>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-5 gap-3 pt-3">
+          {categories.map(cat => {
+            const data = categorySummary[cat];
+            const approvedVal = Number(data?.approved) || 0;
+            const spentVal = Number(data?.spent) || 0;
+            const utilPct = approvedVal > 0 ? (spentVal / approvedVal) * 100 : 0;
 
-          <div className="space-y-3 flex-1 flex flex-col justify-center">
-            {categories.map(cat => {
-              const data = categorySummary[cat];
-              const approvedVal = Number(data?.approved) || 0;
-              const spentVal = Number(data?.spent) || 0;
-              const maxBudget = 300; // max scale
-              const approvedPct = Math.min(100, (approvedVal / maxBudget) * 100);
-              const spentPct = Math.min(100, (spentVal / maxBudget) * 100);
-
-              return (
-                <div key={cat} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-slate-800 truncate max-w-xs">{cat}</span>
-                    <span className="text-slate-600 text-[11px]">
-                      ₹{spentVal.toFixed(1)} Cr / ₹{approvedVal.toFixed(1)} Cr
-                    </span>
-                  </div>
-                  <div className="relative h-4 bg-slate-100 rounded-xs overflow-hidden">
-                    <div
-                      className="absolute top-0 bottom-0 left-0 bg-blue-800/80 rounded-xs"
-                      style={{ width: `${approvedPct}%` }}
-                    />
-                    <div
-                      className="absolute top-0 bottom-0 left-0 bg-emerald-600 rounded-xs"
-                      style={{ width: `${spentPct}%` }}
-                    />
-                  </div>
+            return (
+              <div key={cat} className="p-3 bg-slate-50 rounded border border-slate-200 space-y-2 min-w-0">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="font-semibold text-slate-900 text-xs truncate" title={cat}>{cat}</span>
+                  <span className="text-[11px] font-bold text-blue-900 whitespace-nowrap">{utilPct.toFixed(1)}% spent</span>
                 </div>
-              );
-            })}
-          </div>
+                <div className="flex items-center justify-between text-[11px] gap-1">
+                  <span className="text-slate-600 truncate">
+                    Exp: <span className="font-bold text-emerald-800 font-mono">₹{spentVal.toFixed(1)} Cr</span>
+                  </span>
+                  <span className="text-slate-500 truncate">
+                    Outlay: <span className="font-bold text-slate-800 font-mono">₹{approvedVal.toFixed(1)} Cr</span>
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                  <div
+                    className="bg-emerald-600 h-full rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(100, Math.max(0, utilPct))}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -360,7 +299,7 @@ export const ExecutiveDashboard: React.FC = () => {
                 <tr>
                   <th className="py-2.5 px-3">Project ID & Title</th>
                   <th className="py-2.5 px-3">District</th>
-                  <th className="py-2.5 px-3 text-center">Delay</th>
+                  <th className="py-2.5 px-3 text-center whitespace-nowrap">No. of Days Delay</th>
                   <th className="py-2.5 px-3">Progress</th>
                   <th className="py-2.5 px-3">Root Cause</th>
                   <th className="py-2.5 px-3 text-right">Action</th>
@@ -374,9 +313,23 @@ export const ExecutiveDashboard: React.FC = () => {
                       <span className="font-semibold text-slate-900 line-clamp-1">{prj.name}</span>
                     </td>
                     <td className="py-2 px-3 font-medium text-slate-600">{prj.district}</td>
-                    <td className="py-2 px-3 text-center">
-                      <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold text-[11px]">
-                        +{prj.delayDays} Days
+                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shadow-2xs ${
+                          prj.delayDays >= 60
+                            ? 'bg-rose-50 text-rose-800 border-rose-200'
+                            : prj.delayDays >= 30
+                            ? 'bg-amber-50 text-amber-900 border-amber-200'
+                            : 'bg-orange-50 text-orange-800 border-orange-200'
+                        }`}
+                      >
+                        <Clock
+                          className={`w-3.5 h-3.5 shrink-0 ${
+                            prj.delayDays >= 60 ? 'text-rose-600' : 'text-amber-600'
+                          }`}
+                        />
+                        <span className="font-mono font-bold tracking-tight">+{prj.delayDays}</span>
+                        <span className="text-[11px] font-medium opacity-90">Days</span>
                       </span>
                     </td>
                     <td className="py-2 px-3">
