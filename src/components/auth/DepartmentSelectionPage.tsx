@@ -15,7 +15,7 @@ export interface DepartmentItem {
 }
 
 export const DESIGNATIONS: DesignationItem[] = [
-  { id: 'udhdd', name: 'UDHDD officials', code: 'UDHDD' },
+  { id: 'udhdd', name: 'UDHDD official', code: 'UDHDD' },
   { id: 'nodal', name: 'Nodal Officer', code: 'NODAL' },
   { id: 'state', name: 'State Office', code: 'STATE' },
   { id: 'district', name: 'District office', code: 'DISTRICT' },

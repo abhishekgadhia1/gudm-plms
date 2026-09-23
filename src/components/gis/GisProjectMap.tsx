@@ -1,8 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Breadcrumbs } from '../common/Breadcrumbs';
 import { StatusBadge } from '../common/StatusBadge';
 import { ProjectMaster } from '../../types';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import {
   MapPin,
   Filter,
@@ -12,8 +14,34 @@ import {
   Building,
   Activity,
   ArrowUpRight,
-  Maximize2
+  Maximize2,
+  RotateCcw,
+  Compass,
+  Map as MapIcon
 } from 'lucide-react';
+
+// Gujarat geographic bounds and center
+const GUJARAT_CENTER: [number, number] = [22.40, 71.75];
+const GUJARAT_DEFAULT_ZOOM = 7;
+
+// Tile Layer options
+const TILE_LAYERS = {
+  carto: {
+    name: 'Administrative GIS',
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap contributors'
+  },
+  osm: {
+    name: 'OpenStreetMap',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors'
+  },
+  satellite: {
+    name: 'Satellite View',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+  }
+};
 
 export const GisProjectMap: React.FC = () => {
   const { projects, setSelectedProjectId } = useApp();
@@ -21,6 +49,12 @@ export const GisProjectMap: React.FC = () => {
   const [selectedDistrict, setSelectedDistrict] = useState<string>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [activePinProject, setActivePinProject] = useState<ProjectMaster | null>(projects[0] || null);
+  const [activeMapLayer, setActiveMapLayer] = useState<'carto' | 'osm' | 'satellite'>('carto');
+
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const markersLayerRef = useRef<L.LayerGroup | null>(null);
 
   const districts = useMemo(() => Array.from(new Set(projects.map(p => p.district))).sort(), [projects]);
   const categories = useMemo(() => Array.from(new Set(projects.map(p => p.category))).sort(), [projects]);
@@ -33,38 +67,178 @@ export const GisProjectMap: React.FC = () => {
     });
   }, [projects, selectedDistrict, selectedCategory]);
 
-  // Gujarat bounding coordinates approximately:
-  // Lat: 20.1 to 24.7
-  // Lng: 68.1 to 74.4
-  const minLat = 20.4;
-  const maxLat = 24.5;
-  const minLng = 68.6;
-  const maxLng = 74.4;
-
-  const getCoordinatesPct = (lat: number, lng: number) => {
-    // Invert lat for Y-axis (top = maxLat, bottom = minLat)
-    const yPct = ((maxLat - lat) / (maxLat - minLat)) * 82 + 8;
-    const xPct = ((lng - minLng) / (maxLng - minLng)) * 82 + 8;
-    return {
-      top: `${Math.max(5, Math.min(92, yPct))}%`,
-      left: `${Math.max(5, Math.min(92, xPct))}%`
-    };
-  };
-
-  const getPinColor = (status: string) => {
+  const getPinColorHex = (status: string) => {
     switch (status) {
       case 'In Execution':
-        return 'bg-emerald-600 border-emerald-800';
+        return '#059669'; // emerald-600
       case 'Delayed':
-        return 'bg-amber-500 border-amber-700';
+        return '#d97706'; // amber-600
       case 'Under RFP':
-        return 'bg-purple-600 border-purple-800';
+        return '#9333ea'; // purple-600
       case 'Awarded':
-        return 'bg-blue-600 border-blue-800';
+        return '#2563eb'; // blue-600
       case 'Completed':
-        return 'bg-teal-600 border-teal-800';
+        return '#0d9488'; // teal-600
       default:
-        return 'bg-blue-800 border-blue-950';
+        return '#1e3a8a'; // blue-900
+    }
+  };
+
+  // Initialize Leaflet Map once
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    // Prevent re-initialization
+    if (!mapInstanceRef.current) {
+      const map = L.map(mapContainerRef.current, {
+        center: GUJARAT_CENTER,
+        zoom: GUJARAT_DEFAULT_ZOOM,
+        minZoom: 6,
+        maxZoom: 17,
+        zoomControl: false,
+        attributionControl: false
+      });
+
+      // Add Zoom Control at bottom-right
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+      // Add default tile layer
+      const initialLayer = L.tileLayer(TILE_LAYERS[activeMapLayer].url, {
+        maxZoom: 18,
+        subdomains: 'abcd'
+      }).addTo(map);
+
+      tileLayerRef.current = initialLayer;
+
+      // Add Markers Layer Group
+      const markersGroup = L.layerGroup().addTo(map);
+      markersLayerRef.current = markersGroup;
+
+      mapInstanceRef.current = map;
+
+      // Ensure proper map sizing
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 250);
+    }
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  // Update Tile Layer when layer switch state changes
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    if (tileLayerRef.current) {
+      mapInstanceRef.current.removeLayer(tileLayerRef.current);
+    }
+
+    const newLayer = L.tileLayer(TILE_LAYERS[activeMapLayer].url, {
+      maxZoom: 18,
+      subdomains: 'abcd'
+    }).addTo(mapInstanceRef.current);
+
+    tileLayerRef.current = newLayer;
+  }, [activeMapLayer]);
+
+  // Update Markers whenever filtered projects or active pin changes
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const markersGroup = markersLayerRef.current;
+    if (!map || !markersGroup) return;
+
+    markersGroup.clearLayers();
+
+    filteredProjects.forEach(prj => {
+      const isSelected = activePinProject?.id === prj.id;
+      const color = getPinColorHex(prj.currentStatus);
+
+      // Coordinates validation
+      const lat = Number(prj.coordinates?.lat) || 22.3;
+      const lng = Number(prj.coordinates?.lng) || 71.8;
+
+      // Create Custom SVG Marker Icon
+      const customIcon = L.divIcon({
+        className: 'custom-gis-pin',
+        html: `
+          <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+            ${
+              isSelected
+                ? `<div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; background-color: ${color}44; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>`
+                : ''
+            }
+            <div style="
+              width: ${isSelected ? '32px' : '26px'};
+              height: ${isSelected ? '32px' : '26px'};
+              background-color: ${color};
+              border: 2.5px solid #ffffff;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+              transition: all 0.2s ease-in-out;
+            ">
+              <svg width="${isSelected ? '16' : '13'}" height="${isSelected ? '16' : '13'}" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+          </div>
+        `,
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+        popupAnchor: [0, -17]
+      });
+
+      const marker = L.marker([lat, lng], { icon: customIcon });
+
+      // Click handler
+      marker.on('click', () => {
+        setActivePinProject(prj);
+      });
+
+      // Tooltip on hover
+      marker.bindTooltip(`
+        <div style="font-family: inherit; font-size: 11px; line-height: 1.3;">
+          <strong style="color: #0f172a;">${prj.district}</strong> &bull; <span style="color: ${color}; font-weight: 600;">${prj.currentStatus}</span>
+          <div style="color: #475569; font-weight: 500; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${prj.name}</div>
+        </div>
+      `, {
+        direction: 'top',
+        offset: [0, -12],
+        opacity: 0.96
+      });
+
+      markersGroup.addLayer(marker);
+    });
+  }, [filteredProjects, activePinProject]);
+
+  // Handle fly-to when activePinProject changes
+  const handleSelectProject = (prj: ProjectMaster) => {
+    setActivePinProject(prj);
+    if (mapInstanceRef.current && prj.coordinates) {
+      const lat = Number(prj.coordinates.lat);
+      const lng = Number(prj.coordinates.lng);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        mapInstanceRef.current.flyTo([lat, lng], Math.max(mapInstanceRef.current.getZoom(), 11), {
+          duration: 0.8
+        });
+      }
+    }
+  };
+
+  // Reset View to Gujarat
+  const handleResetView = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.flyTo(GUJARAT_CENTER, GUJARAT_DEFAULT_ZOOM, {
+        duration: 0.8
+      });
     }
   };
 
@@ -151,101 +325,83 @@ export const GisProjectMap: React.FC = () => {
       {/* Main Map Stage Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Gujarat Spatial Canvas */}
-        <div className="lg:col-span-2 bg-[#F1F5F9] rounded-lg border border-slate-300 p-4 relative min-h-[520px] overflow-hidden flex flex-col justify-between shadow-inner">
-          {/* Subtle Gujarat Base Map Outline (SVG) */}
-          <svg
-            className="absolute inset-0 w-full h-full text-slate-300/40 pointer-events-none"
-            viewBox="0 0 1000 700"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {/* Gujarat Stylized Administrative Perimeter */}
-            <path
-              d="M120,240 C140,160 220,130 300,100 C370,80 430,90 520,120 C580,100 660,110 740,160 C800,200 840,260 860,320 C880,390 850,440 820,490 C780,560 720,620 640,650 C580,670 510,660 460,610 C420,570 380,550 320,550 C260,550 200,530 160,470 C120,410 100,320 120,240 Z"
-              fill="#E2E8F0"
-              stroke="#94A3B8"
-              strokeWidth="2"
-              strokeDasharray="4 2"
-            />
-            {/* Gulf of Kutch / Khambhat Stylized Inlets */}
-            <path
-              d="M160,340 Q220,350 280,330 T360,350"
-              stroke="#CBD5E1"
-              strokeWidth="4"
-              fill="none"
-            />
-            <path
-              d="M520,450 Q560,520 600,560"
-              stroke="#CBD5E1"
-              strokeWidth="6"
-              fill="none"
-            />
-          </svg>
+        <div className="lg:col-span-2 bg-[#F1F5F9] rounded-lg border border-slate-300 relative min-h-[540px] h-[540px] overflow-hidden flex flex-col justify-between shadow-inner">
+          {/* Actual Leaflet Gujarat Map */}
+          <div
+            ref={mapContainerRef}
+            className="absolute inset-0 w-full h-full z-0"
+            style={{ background: '#f8fafc' }}
+          />
 
-          {/* Grid Overlay Lines */}
-          <div className="absolute inset-0 grid grid-cols-6 grid-rows-6 pointer-events-none opacity-20 border border-slate-400">
-            {Array.from({ length: 36 }).map((_, i) => (
-              <div key={i} className="border-r border-b border-slate-400" />
-            ))}
-          </div>
+          {/* Top Floating Controls on Map */}
+          <div className="relative z-10 p-3 flex items-center justify-between pointer-events-none">
+            {/* Left: Gujarat Identification Badge */}
+            <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-200 text-[11px] text-slate-800 shadow-sm pointer-events-auto flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-bold text-[#0E355C]">State of Gujarat GIS</span>
+              <span className="text-slate-400 font-mono">|</span>
+              <span className="text-slate-600 font-medium">EPSG:4326 WGS84</span>
+            </div>
 
-          {/* District Labels */}
-          <div className="absolute top-16 left-16 text-[11px] font-bold text-slate-400 select-none tracking-widest uppercase">
-            Kutch Region
-          </div>
-          <div className="absolute top-28 left-1/2 text-[11px] font-bold text-slate-400 select-none tracking-widest uppercase">
-            North Gujarat
-          </div>
-          <div className="absolute bottom-32 left-32 text-[11px] font-bold text-slate-400 select-none tracking-widest uppercase">
-            Saurashtra
-          </div>
-          <div className="absolute bottom-20 right-28 text-[11px] font-bold text-slate-400 select-none tracking-widest uppercase">
-            South Gujarat
-          </div>
-
-          {/* Dynamic Map Pins */}
-          {filteredProjects.map(prj => {
-            const pos = getCoordinatesPct(prj.coordinates.lat, prj.coordinates.lng);
-            const isSelected = activePinProject?.id === prj.id;
-            const pinColor = getPinColor(prj.currentStatus);
-
-            return (
-              <div
-                key={prj.id}
-                style={{ top: pos.top, left: pos.left }}
-                onClick={() => setActivePinProject(prj)}
-                className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer z-10 group"
-              >
-                {/* Outer pulsing ring if selected */}
-                {isSelected && (
-                  <span className="absolute -inset-2 rounded-full bg-blue-600/30 animate-ping" />
-                )}
-
-                {/* Pin marker icon */}
-                <div
-                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-white shadow-md transition-transform group-hover:scale-125 ${pinColor} ${
-                    isSelected ? 'ring-4 ring-blue-300 scale-125' : ''
+            {/* Right: Layer Switcher & Reset Button */}
+            <div className="flex items-center gap-1.5 pointer-events-auto">
+              {/* Map Layer Mode Switcher */}
+              <div className="bg-white/95 backdrop-blur-md p-1 rounded-lg border border-slate-200 shadow-sm flex items-center text-[11px] font-semibold text-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setActiveMapLayer('carto')}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    activeMapLayer === 'carto'
+                      ? 'bg-[#0E355C] text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
-                  <MapPin className="w-3.5 h-3.5" />
-                </div>
-
-                {/* Hover Tooltip */}
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-7 hidden group-hover:block bg-slate-900 text-white text-[10px] py-1 px-2 rounded whitespace-nowrap z-30 shadow-lg pointer-events-none">
-                  <div className="font-bold">{prj.district}</div>
-                  <div className="text-slate-300">{prj.id}: {prj.name}</div>
-                </div>
+                  GIS Map
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveMapLayer('osm')}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    activeMapLayer === 'osm'
+                      ? 'bg-[#0E355C] text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  Street
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveMapLayer('satellite')}
+                  className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                    activeMapLayer === 'satellite'
+                      ? 'bg-[#0E355C] text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  Satellite
+                </button>
               </div>
-            );
-          })}
 
-          {/* Map Controls Floating Overlay */}
-          <div className="relative z-20 flex items-center justify-between pointer-events-none">
-            <div className="bg-white/90 backdrop-blur-xs px-2.5 py-1.5 rounded border border-slate-300 text-[10px] text-slate-700 shadow-2xs pointer-events-auto">
-              <strong>Gujarat Urban GIS Portal</strong> &bull; EPSG:4326 WGS84
+              {/* Reset to Gujarat Center */}
+              <button
+                type="button"
+                onClick={handleResetView}
+                title="Reset view to whole Gujarat"
+                className="bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-slate-600" />
+                <span className="hidden sm:inline">Reset</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom Floating Info Overlay */}
+          <div className="relative z-10 p-3 flex items-center justify-between pointer-events-none">
+            <div className="bg-white/90 backdrop-blur-xs px-2.5 py-1 rounded border border-slate-300 text-[10px] text-slate-700 shadow-2xs pointer-events-auto">
+              <strong>Gujarat Urban Development Mission</strong> &bull; Spatial Infrastructure Portal
             </div>
             <div className="bg-white/90 backdrop-blur-xs px-2 py-1 rounded border border-slate-300 text-[10px] text-slate-700 shadow-2xs pointer-events-auto">
-              Scale 1:500,000
+              Pan & Zoom Active &bull; Interactive Markers
             </div>
           </div>
         </div>
@@ -274,7 +430,7 @@ export const GisProjectMap: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">GIS Coordinates:</span>
-                  <span className="font-mono text-slate-700">
+                  <span className="font-mono text-slate-700 font-semibold">
                     {typeof activePinProject.coordinates?.lat === 'number' ? activePinProject.coordinates.lat.toFixed(4) : (Number(activePinProject.coordinates?.lat) || 0).toFixed(4)}° N,{' '}
                     {typeof activePinProject.coordinates?.lng === 'number' ? activePinProject.coordinates.lng.toFixed(4) : (Number(activePinProject.coordinates?.lng) || 0).toFixed(4)}° E
                   </span>
@@ -319,7 +475,7 @@ export const GisProjectMap: React.FC = () => {
               {/* Action */}
               <button
                 onClick={() => setSelectedProjectId(activePinProject.id)}
-                className="w-full py-2 bg-[#0E355C] text-white rounded font-semibold text-xs hover:bg-[#092644] transition-colors flex items-center justify-center shadow-xs"
+                className="w-full py-2 bg-[#0E355C] text-white rounded font-semibold text-xs hover:bg-[#092644] transition-colors flex items-center justify-center shadow-xs cursor-pointer"
               >
                 <ArrowUpRight className="w-4 h-4 mr-1.5" />
                 Open Full Project Master Record
@@ -340,7 +496,7 @@ export const GisProjectMap: React.FC = () => {
               {filteredProjects.map(p => (
                 <div
                   key={p.id}
-                  onClick={() => setActivePinProject(p)}
+                  onClick={() => handleSelectProject(p)}
                   className={`p-2.5 cursor-pointer hover:bg-slate-50 flex items-center justify-between ${
                     activePinProject?.id === p.id ? 'bg-blue-50 font-bold' : ''
                   }`}
