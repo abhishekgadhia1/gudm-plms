@@ -7,14 +7,16 @@ import {
   AlertTriangle,
   UserCheck,
   ChevronDown,
-  Lock
+  Lock,
+  ArrowLeft
 } from 'lucide-react';
 
 interface HeaderProps {
   onLock?: () => void;
+  onBack?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onLock }) => {
+export const Header: React.FC<HeaderProps> = ({ onLock, onBack }) => {
   const {
     currentRole,
     setCurrentRole,
@@ -46,8 +48,19 @@ export const Header: React.FC<HeaderProps> = ({ onLock }) => {
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs">
       {/* Top Government Bar */}
       <div className="bg-[#0b2b4d] text-slate-200 text-xs px-4 py-1 flex items-center justify-between border-b border-[#071f38]">
-        {/* Lock symbol on the far left corner */}
-        <div>
+        {/* Back and Lock symbols on the far left corner */}
+        <div className="flex items-center space-x-2">
+          {onBack && (
+            <button
+              onClick={onBack}
+              title="Back to Department Selection"
+              aria-label="Back to Department Selection"
+              className="flex items-center space-x-1 px-1.5 py-0.5 rounded text-slate-300 hover:text-white hover:bg-[#123e6b]/70 transition-colors text-[11px] font-medium cursor-pointer"
+            >
+              <ArrowLeft className="w-3 h-3 stroke-[2]" />
+              <span>Back</span>
+            </button>
+          )}
           {onLock && (
             <button
               onClick={onLock}

@@ -23,6 +23,7 @@ import { ReportsModule } from './components/reports/ReportsModule';
 import { NotificationsModule } from './components/notifications/NotificationsModule';
 import { AdministrationModule } from './components/admin/AdministrationModule';
 import { PasscodeGate } from './components/auth/PasscodeGate';
+import { DepartmentSelectionPage } from './components/auth/DepartmentSelectionPage';
 
 import { Sparkles, HelpCircle } from 'lucide-react';
 
@@ -130,7 +131,15 @@ const MainContent: React.FC<MainContentProps> = ({ onLock }) => {
   );
 };
 
-export default function App() {
+const AppShell: React.FC = () => {
+  const {
+    selectedDesignation,
+    setSelectedDesignation,
+    selectedDepartment,
+    setSelectedDepartment,
+    setCurrentRole
+  } = useApp();
+
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     try {
       return sessionStorage.getItem('gudm_plms_passcode_unlocked') === 'true';
@@ -147,6 +156,14 @@ export default function App() {
     }
   });
 
+  const [isDeptConfirmed, setIsDeptConfirmed] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('gudm_plms_dept_confirmed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const handleUnlock = () => {
     try {
       sessionStorage.setItem('gudm_plms_passcode_unlocked', 'true');
@@ -160,25 +177,76 @@ export default function App() {
     setShowGate(false);
   };
 
-  const handleLock = () => {
+  const handleConfirmSelection = (designation: string, department: string) => {
+    setSelectedDesignation(designation);
+    setSelectedDepartment(department);
+
+    // Sync corresponding dashboard role from designation
+    if (designation.toLowerCase().includes('udhdd')) {
+      setCurrentRole('Super Administrator');
+    } else if (designation.toLowerCase().includes('nodal')) {
+      setCurrentRole('Mission Director');
+    } else if (designation.toLowerCase().includes('state')) {
+      setCurrentRole('Chief Engineer');
+    } else if (designation.toLowerCase().includes('district')) {
+      setCurrentRole('Project Manager');
+    } else if (designation.toLowerCase().includes('block')) {
+      setCurrentRole('Engineering Officer');
+    }
+
     try {
-      sessionStorage.removeItem('gudm_plms_passcode_unlocked');
+      sessionStorage.setItem('gudm_plms_dept_confirmed', 'true');
+      sessionStorage.setItem('gudm_plms_designation', designation);
+      sessionStorage.setItem('gudm_plms_department', department);
     } catch {
       // ignore storage errors
     }
+    setIsDeptConfirmed(true);
+  };
+
+  const handleLock = () => {
+    try {
+      sessionStorage.removeItem('gudm_plms_passcode_unlocked');
+      sessionStorage.removeItem('gudm_plms_dept_confirmed');
+      sessionStorage.removeItem('gudm_plms_designation');
+      sessionStorage.removeItem('gudm_plms_department');
+      localStorage.removeItem('gudm_plms_v1_selectedDesignation');
+      localStorage.removeItem('gudm_plms_v1_selectedDepartment');
+    } catch {
+      // ignore storage errors
+    }
+    setSelectedDesignation('');
+    setSelectedDepartment('');
     setIsUnlocked(false);
+    setIsDeptConfirmed(false);
     setShowGate(true);
   };
 
   return (
-    <AppProvider>
-      <MainContent onLock={handleLock} />
+    <>
+      {isDeptConfirmed ? (
+        <MainContent onLock={handleLock} />
+      ) : (
+        <DepartmentSelectionPage
+          initialDesignation={selectedDesignation}
+          initialDepartment={selectedDepartment}
+          onConfirm={handleConfirmSelection}
+        />
+      )}
       {showGate && (
         <PasscodeGate
           onUnlock={handleUnlock}
           onComplete={handleGateComplete}
         />
       )}
+    </>
+  );
+};
+
+export default function App() {
+  return (
+    <AppProvider>
+      <AppShell />
     </AppProvider>
   );
 }

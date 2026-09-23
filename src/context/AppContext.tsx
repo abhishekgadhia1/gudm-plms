@@ -61,6 +61,12 @@ interface AppContextType {
   setSelectedProjectId: (id: string | null) => void;
   fiscalYear: string;
   setFiscalYear: (fy: string) => void;
+  selectedDesignation: string;
+  setSelectedDesignation: (desig: string) => void;
+  selectedDepartment: string;
+  setSelectedDepartment: (dept: string) => void;
+  selectedSubDepartment: string;
+  setSelectedSubDepartment: (subDept: string) => void;
 
   // Data
   projects: ProjectMaster[];
@@ -114,6 +120,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentNav, setCurrentNav] = useState<string>('Dashboard');
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [fiscalYear, setFiscalYear] = useState<string>('FY 2026-27');
+  const [selectedDesignation, setSelectedDesignation] = useState<string>(() => {
+    return localStorage.getItem(STORAGE_PREFIX + 'selectedDesignation') || '';
+  });
+  const [selectedDepartment, setSelectedDepartment] = useState<string>(() => {
+    return localStorage.getItem(STORAGE_PREFIX + 'selectedDepartment') || '';
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_PREFIX + 'selectedDesignation', selectedDesignation);
+  }, [selectedDesignation]);
+  const [selectedSubDepartment, setSelectedSubDepartment] = useState<string>(() => {
+    return localStorage.getItem(STORAGE_PREFIX + 'selectedSubDepartment') || 'Gujarat Urban Development Mission (GUDM)';
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_PREFIX + 'selectedDepartment', selectedDepartment);
+  }, [selectedDepartment]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_PREFIX + 'selectedSubDepartment', selectedSubDepartment);
+  }, [selectedSubDepartment]);
 
   // Stored states with fallback
   const [projects, setProjects] = useState<ProjectMaster[]>(() => {
@@ -823,6 +850,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSelectedProjectId,
       fiscalYear,
       setFiscalYear,
+      selectedDesignation,
+      setSelectedDesignation,
+      selectedDepartment,
+      setSelectedDepartment,
+      selectedSubDepartment,
+      setSelectedSubDepartment,
       projects,
       rfps,
       contracts,
@@ -853,6 +886,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       currentNav,
       selectedProjectId,
       fiscalYear,
+      selectedDesignation,
+      selectedDepartment,
+      selectedSubDepartment,
       projects,
       rfps,
       contracts,
