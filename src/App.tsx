@@ -25,13 +25,12 @@ import { AdministrationModule } from './components/admin/AdministrationModule';
 import { PasscodeGate } from './components/auth/PasscodeGate';
 import { DepartmentSelectionPage } from './components/auth/DepartmentSelectionPage';
 
-import { Sparkles, HelpCircle } from 'lucide-react';
-
 interface MainContentProps {
   onLock: () => void;
+  onBack?: () => void;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ onLock }) => {
+const MainContent: React.FC<MainContentProps> = ({ onLock, onBack }) => {
   const { currentNav, selectedProjectId, setSelectedProjectId, projects } = useApp();
   const [showScenariosModal, setShowScenariosModal] = useState(false);
 
@@ -80,7 +79,7 @@ const MainContent: React.FC<MainContentProps> = ({ onLock }) => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans flex flex-col">
-      <Header onLock={onLock} />
+      <Header onLock={onLock} onBack={onBack} />
 
       <div className="flex flex-1 relative">
         <Sidebar />
@@ -90,19 +89,9 @@ const MainContent: React.FC<MainContentProps> = ({ onLock }) => {
         </main>
       </div>
 
-      {/* Floating Demo Scenarios Launcher Button */}
-      <div className="fixed bottom-4 right-4 z-40">
-        <button
-          onClick={() => setShowScenariosModal(true)}
-          className="flex items-center space-x-2 bg-[#0E355C] hover:bg-[#092644] text-white px-3.5 py-2.5 rounded-full shadow-lg border border-amber-400/80 transition-transform hover:scale-105 text-xs font-semibold"
-          title="Open Guided Test Scenarios for GUDM PLMS Prototype"
-        >
-          <Sparkles className="w-4 h-4 text-amber-300" />
-          <span>15 Demo Scenarios</span>
-        </button>
-      </div>
+      {/* Floating Demo Scenarios Launcher Button - hidden per user request */}
 
-      {/* 15 Demo Scenarios Modal */}
+      {/* 15 Demo Scenarios Modal (retained for programmatic access) */}
       <DemoScenariosModal
         isOpen={showScenariosModal}
         onClose={() => setShowScenariosModal(false)}
@@ -182,7 +171,7 @@ const AppShell: React.FC = () => {
     setSelectedDepartment(department);
 
     // Sync corresponding dashboard role from designation
-    if (designation.toLowerCase().includes('udhdd')) {
+    if (designation.toLowerCase().includes('uduhd') || designation.toLowerCase().includes('udhdd')) {
       setCurrentRole('Super Administrator');
     } else if (designation.toLowerCase().includes('nodal')) {
       setCurrentRole('Mission Director');
@@ -225,7 +214,7 @@ const AppShell: React.FC = () => {
   return (
     <>
       {isDeptConfirmed ? (
-        <MainContent onLock={handleLock} />
+        <MainContent onLock={handleLock} onBack={() => setIsDeptConfirmed(false)} />
       ) : (
         <DepartmentSelectionPage
           initialDesignation={selectedDesignation}

@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
-import { UserRole } from '../../types';
 import {
   Bell,
-  CheckCircle2,
+  Check,
   AlertTriangle,
-  UserCheck,
   ChevronDown,
   Lock,
   ArrowLeft
 } from 'lucide-react';
+import { DESIGNATIONS, DEPARTMENTS } from '../auth/DepartmentSelectionPage';
 
 interface HeaderProps {
   onLock?: () => void;
@@ -18,31 +17,79 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onLock, onBack }) => {
   const {
-    currentRole,
-    setCurrentRole,
     fiscalYear,
     setFiscalYear,
     notifications,
     markNotificationRead,
-    setCurrentNav
+    setCurrentNav,
+    selectedDesignation,
+    setSelectedDesignation,
+    selectedDepartment,
+    setSelectedDepartment,
+    setCurrentRole
   } = useApp();
 
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showRoleSelector, setShowRoleSelector] = useState(false);
+  const [isDesignationOpen, setIsDesignationOpen] = useState(false);
+  const [isDepartmentOpen, setIsDepartmentOpen] = useState(false);
+
+  const designationDropdownRef = useRef<HTMLDivElement>(null);
+  const departmentDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        designationDropdownRef.current &&
+        !designationDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDesignationOpen(false);
+      }
+      if (
+        departmentDropdownRef.current &&
+        !departmentDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDepartmentOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelectDesignation = (name: string) => {
+    setSelectedDesignation(name);
+    try {
+      sessionStorage.setItem('gudm_plms_designation', name);
+    } catch {
+      // ignore
+    }
+    // Sync corresponding role
+    if (name.toLowerCase().includes('uduhd') || name.toLowerCase().includes('udhdd')) {
+      setCurrentRole('Super Administrator');
+    } else if (name.toLowerCase().includes('nodal')) {
+      setCurrentRole('Mission Director');
+    } else if (name.toLowerCase().includes('state')) {
+      setCurrentRole('Chief Engineer');
+    } else if (name.toLowerCase().includes('district')) {
+      setCurrentRole('Project Manager');
+    } else if (name.toLowerCase().includes('block')) {
+      setCurrentRole('Engineering Officer');
+    }
+    setIsDesignationOpen(false);
+  };
+
+  const handleSelectDepartment = (name: string) => {
+    setSelectedDepartment(name);
+    try {
+      sessionStorage.setItem('gudm_plms_department', name);
+    } catch {
+      // ignore
+    }
+    setIsDepartmentOpen(false);
+  };
 
   const unreadCount = notifications.filter(n => !n.read).length;
-
-  const rolesList: UserRole[] = [
-    'Super Administrator',
-    'GUDM Department Administrator',
-    'Project Manager',
-    'Engineering Officer',
-    'Procurement Officer',
-    'Finance Officer',
-    'Senior Management',
-    'Contractor / Implementing Agency',
-    'Field Inspection Officer'
-  ];
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-xs">
@@ -66,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({ onLock, onBack }) => {
               onClick={onLock}
               title="Lock gate"
               aria-label="Lock gate"
-              className="flex items-center justify-center p-0.5 rounded text-slate-400/80 hover:text-amber-300 hover:bg-[#123e6b]/60 transition-colors"
+              className="flex items-center justify-center p-0.5 rounded text-slate-400/80 hover:text-amber-300 hover:bg-[#123e6b]/60 transition-colors cursor-pointer"
             >
               <Lock className="w-3 h-3 stroke-[1.6]" />
             </button>
@@ -89,10 +136,10 @@ export const Header: React.FC<HeaderProps> = ({ onLock, onBack }) => {
       </div>
 
       {/* Main Official Header Bar */}
-      <div className="px-4 sm:px-6 py-2.5 flex items-center justify-between">
+      <div className="px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
         {/* Portal Title */}
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold text-[#0E355C] tracking-tight leading-snug">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold text-[#0E355C] tracking-tight leading-snug truncate">
             Urban Development &amp; Urban Housing Department, Govt. of Gujarat
           </h1>
           <div className="text-sm font-semibold text-slate-700 tracking-tight flex items-center mt-0.5">
@@ -101,53 +148,119 @@ export const Header: React.FC<HeaderProps> = ({ onLock, onBack }) => {
               PLMS Portal
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5 hidden sm:block">
             Project Lifecycle Management System
           </p>
         </div>
 
-        {/* Right Controls: Role Switcher & Notifications & User Profile */}
-        <div className="flex items-center space-x-3">
-          {/* Role Switcher Pill - Crucial for Prototype Demo */}
-          <div className="relative">
+        {/* Right Controls: Designation & Department Dropdown Boxes + Notifications */}
+        <div className="flex items-center space-x-2.5 shrink-0">
+          {/* Box 1: Designation Dropdown */}
+          <div ref={designationDropdownRef} className="relative">
             <button
-              onClick={() => setShowRoleSelector(!showRoleSelector)}
-              className="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-medium rounded-md border border-slate-300 transition-colors"
+              type="button"
+              onClick={() => {
+                setIsDesignationOpen(!isDesignationOpen);
+                setIsDepartmentOpen(false);
+              }}
+              className="flex items-center justify-between space-x-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs rounded-lg border border-slate-300 hover:border-slate-400 transition-colors shadow-2xs cursor-pointer min-w-[130px] sm:min-w-[155px]"
             >
-              <UserCheck className="w-4 h-4 text-blue-700" />
-              <div className="text-left">
-                <span className="block text-[10px] text-slate-500 font-normal uppercase leading-tight">
-                  Simulated User Role
+              <div className="text-left truncate pr-1">
+                <span className="block text-[9px] uppercase tracking-wider font-bold text-slate-500 leading-tight">
+                  Designation
                 </span>
-                <span className="font-semibold text-blue-900">{currentRole}</span>
+                <span className="font-semibold text-[#0E355C] truncate block leading-tight">
+                  {selectedDesignation || 'UDUHD official'}
+                </span>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-500 ml-1" />
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-500 shrink-0 transition-transform duration-200 ${
+                  isDesignationOpen ? 'rotate-180 text-[#0E355C]' : ''
+                }`}
+              />
             </button>
 
-            {showRoleSelector && (
-              <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-slate-200 py-1.5 z-50 animate-in fade-in slide-in-from-top-1">
-                <div className="px-3 py-1.5 border-b border-slate-100 bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
-                  Switch Active Role (Prototype Demo)
+            {isDesignationOpen && (
+              <div className="absolute right-0 mt-1.5 w-60 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-50 animate-in fade-in slide-in-from-top-1">
+                <div className="px-3 py-1.5 border-b border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Select Designation
                 </div>
-                <div className="max-h-72 overflow-y-auto">
-                  {rolesList.map(role => (
-                    <button
-                      key={role}
-                      onClick={() => {
-                        setCurrentRole(role);
-                        setShowRoleSelector(false);
-                      }}
-                      className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-blue-50 transition-colors ${
-                        currentRole === role ? 'bg-blue-50 text-blue-800 font-bold border-l-4 border-blue-700' : 'text-slate-700'
-                      }`}
-                    >
-                      <span>{role}</span>
-                      {currentRole === role && <CheckCircle2 className="w-3.5 h-3.5 text-blue-700" />}
-                    </button>
-                  ))}
+                <div className="py-1">
+                  {DESIGNATIONS.map(desig => {
+                    const isSelected = (selectedDesignation || 'UDUHD official') === desig.name;
+                    return (
+                      <button
+                        key={desig.id}
+                        type="button"
+                        onClick={() => handleSelectDesignation(desig.name)}
+                        className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-blue-50 transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-50 text-[#0E355C] font-bold border-l-4 border-[#0E355C]'
+                            : 'text-slate-700'
+                        }`}
+                      >
+                        <span className="truncate mr-2">{desig.name}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#0E355C] shrink-0" />}
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="px-3 py-1.5 border-t border-slate-100 text-[10px] text-slate-500 bg-slate-50">
-                  Controls visible actions, approval permissions & dashboard metrics.
+              </div>
+            )}
+          </div>
+
+          {/* Box 2: Department Dropdown */}
+          <div ref={departmentDropdownRef} className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setIsDepartmentOpen(!isDepartmentOpen);
+                setIsDesignationOpen(false);
+              }}
+              className="flex items-center justify-between space-x-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs rounded-lg border border-slate-300 hover:border-slate-400 transition-colors shadow-2xs cursor-pointer min-w-[120px] sm:min-w-[155px]"
+            >
+              <div className="text-left truncate pr-1">
+                <span className="block text-[9px] uppercase tracking-wider font-bold text-slate-500 leading-tight">
+                  Department
+                </span>
+                <span className="font-semibold text-blue-900 truncate block leading-tight">
+                  {selectedDepartment || 'GUDM'}
+                </span>
+              </div>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-500 shrink-0 transition-transform duration-200 ${
+                  isDepartmentOpen ? 'rotate-180 text-blue-900' : ''
+                }`}
+              />
+            </button>
+
+            {isDepartmentOpen && (
+              <div className="absolute right-0 mt-1.5 w-72 bg-white rounded-lg shadow-xl border border-slate-200 py-1 z-50 animate-in fade-in slide-in-from-top-1">
+                <div className="px-3 py-1.5 border-b border-slate-100 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  Select Department
+                </div>
+                <div className="max-h-72 overflow-y-auto py-1">
+                  {DEPARTMENTS.map(dept => {
+                    const isSelected = (selectedDepartment || 'GUDM') === dept.name;
+                    return (
+                      <button
+                        key={dept.id}
+                        type="button"
+                        onClick={() => handleSelectDepartment(dept.name)}
+                        className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-blue-50 transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-50 text-[#0E355C] font-bold border-l-4 border-[#0E355C]'
+                            : 'text-slate-700'
+                        }`}
+                      >
+                        <div className="truncate mr-2">
+                          <span className="font-bold text-slate-900 mr-1.5">{dept.name}</span>
+                          <span className="text-slate-500 text-[11px]">({dept.description})</span>
+                        </div>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#0E355C] shrink-0" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

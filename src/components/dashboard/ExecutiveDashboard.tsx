@@ -100,15 +100,11 @@ export const ExecutiveDashboard: React.FC = () => {
               </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800 border border-slate-200">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#0E355C]" />
-                {selectedDesignation || 'UDHDD official'}
+                {selectedDesignation || 'UDUHD official'}
               </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold font-mono bg-blue-50 text-blue-900 border border-blue-200">
                 <Calendar className="w-3.5 h-3.5 text-blue-700" />
                 {fiscalYear || 'FY 2026-27'}
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-                Active Schemes Live Sync
               </span>
             </div>
 
