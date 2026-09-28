@@ -24,6 +24,7 @@ import { NotificationsModule } from './components/notifications/NotificationsMod
 import { AdministrationModule } from './components/admin/AdministrationModule';
 import { PasscodeGate } from './components/auth/PasscodeGate';
 import { DepartmentSelectionPage } from './components/auth/DepartmentSelectionPage';
+import { ComaPortalFlow, ComaUlbCategory } from './components/coma/ComaPortalFlow';
 
 interface MainContentProps {
   onLock: () => void;
@@ -153,6 +154,35 @@ const AppShell: React.FC = () => {
     }
   });
 
+  const [isComaFlowActive, setIsComaFlowActive] = useState<boolean>(() => {
+    try {
+      const dept =
+        sessionStorage.getItem('gudm_plms_department') ||
+        localStorage.getItem('gudm_plms_v1_selectedDepartment');
+      const step = sessionStorage.getItem('gudm_plms_coma_step');
+      return dept === 'CoMA' && step !== 'dashboard';
+    } catch {
+      return false;
+    }
+  });
+
+  const [comaInitialUlbType, setComaInitialUlbType] = useState<ComaUlbCategory | ''>(() => {
+    try {
+      return (sessionStorage.getItem('gudm_plms_coma_ulb_type') as ComaUlbCategory) || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const [comaInitialStep, setComaInitialStep] = useState<'select_ulb_type' | 'proposal_screen'>(() => {
+    try {
+      const saved = sessionStorage.getItem('gudm_plms_coma_step');
+      return saved === 'proposal_screen' ? 'proposal_screen' : 'select_ulb_type';
+    } catch {
+      return 'select_ulb_type';
+    }
+  });
+
   const handleUnlock = () => {
     try {
       sessionStorage.setItem('gudm_plms_passcode_unlocked', 'true');
@@ -183,10 +213,26 @@ const AppShell: React.FC = () => {
       setCurrentRole('Engineering Officer');
     }
 
+    const isComa = department.toLowerCase() === 'coma';
+    if (isComa) {
+      setComaInitialUlbType('');
+      setComaInitialStep('select_ulb_type');
+      setIsComaFlowActive(true);
+    } else {
+      setIsComaFlowActive(false);
+    }
+
     try {
       sessionStorage.setItem('gudm_plms_dept_confirmed', 'true');
       sessionStorage.setItem('gudm_plms_designation', designation);
       sessionStorage.setItem('gudm_plms_department', department);
+      if (isComa) {
+        sessionStorage.removeItem('gudm_plms_coma_ulb_type');
+        sessionStorage.setItem('gudm_plms_coma_step', 'select_ulb_type');
+      } else {
+        sessionStorage.removeItem('gudm_plms_coma_ulb_type');
+        sessionStorage.removeItem('gudm_plms_coma_step');
+      }
     } catch {
       // ignore storage errors
     }
@@ -199,6 +245,8 @@ const AppShell: React.FC = () => {
       sessionStorage.removeItem('gudm_plms_dept_confirmed');
       sessionStorage.removeItem('gudm_plms_designation');
       sessionStorage.removeItem('gudm_plms_department');
+      sessionStorage.removeItem('gudm_plms_coma_ulb_type');
+      sessionStorage.removeItem('gudm_plms_coma_step');
       localStorage.removeItem('gudm_plms_v1_selectedDesignation');
       localStorage.removeItem('gudm_plms_v1_selectedDepartment');
     } catch {
@@ -206,6 +254,9 @@ const AppShell: React.FC = () => {
     }
     setSelectedDesignation('');
     setSelectedDepartment('');
+    setComaInitialUlbType('');
+    setComaInitialStep('select_ulb_type');
+    setIsComaFlowActive(false);
     setIsUnlocked(false);
     setIsDeptConfirmed(false);
     setShowGate(true);
@@ -214,7 +265,50 @@ const AppShell: React.FC = () => {
   return (
     <>
       {isDeptConfirmed ? (
-        <MainContent onLock={handleLock} onBack={() => setIsDeptConfirmed(false)} />
+        selectedDepartment === 'CoMA' && isComaFlowActive ? (
+          <ComaPortalFlow
+            selectedDesignation={selectedDesignation}
+            selectedDepartment={selectedDepartment}
+            initialUlbType={comaInitialUlbType}
+            initialStep={comaInitialStep}
+            onBackToLanding={() => {
+              setIsComaFlowActive(false);
+              setIsDeptConfirmed(false);
+            }}
+            onLock={handleLock}
+            onProceedToDashboard={() => {
+              try {
+                sessionStorage.setItem('gudm_plms_coma_step', 'dashboard');
+              } catch {
+                // ignore
+              }
+              setIsComaFlowActive(false);
+            }}
+          />
+        ) : (
+          <MainContent
+            onLock={handleLock}
+            onBack={() => {
+              if (selectedDepartment === 'CoMA') {
+                try {
+                  const savedUlb =
+                    (sessionStorage.getItem('gudm_plms_coma_ulb_type') as ComaUlbCategory) || '';
+                  setComaInitialUlbType(savedUlb);
+                  setComaInitialStep(savedUlb ? 'proposal_screen' : 'select_ulb_type');
+                  sessionStorage.setItem(
+                    'gudm_plms_coma_step',
+                    savedUlb ? 'proposal_screen' : 'select_ulb_type'
+                  );
+                } catch {
+                  // ignore
+                }
+                setIsComaFlowActive(true);
+              } else {
+                setIsDeptConfirmed(false);
+              }
+            }}
+          />
+        )
       ) : (
         <DepartmentSelectionPage
           initialDesignation={selectedDesignation}

@@ -254,8 +254,7 @@ export const Header: React.FC<HeaderProps> = ({ onLock, onBack }) => {
                         }`}
                       >
                         <div className="truncate mr-2">
-                          <span className="font-bold text-slate-900 mr-1.5">{dept.name}</span>
-                          <span className="text-slate-500 text-[11px]">({dept.description})</span>
+                          <span className="font-semibold text-slate-900">{dept.description}</span>
                         </div>
                         {isSelected && <Check className="w-3.5 h-3.5 text-[#0E355C] shrink-0" />}
                       </button>
