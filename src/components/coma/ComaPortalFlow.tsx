@@ -13,11 +13,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ProjectCategory, FundingSource, PriorityLevel } from '../../types';
-import { UlbRoutineOperationsPanel } from './UlbRoutineOperationsPanel';
-import {
-  ProposalLifecycleFlowView,
-  PROPOSAL_LIFECYCLE_STAGES
-} from './ProposalLifecycleFlowView';
+import { UlbRoutineOperationsPanel, ActiveMinimalView } from './UlbRoutineOperationsPanel';
+import { ProposalLifecycleFlowView } from './ProposalLifecycleFlowView';
 
 export type ComaUlbCategory = 'Municipality' | 'Municipal Corporation';
 
@@ -83,7 +80,7 @@ export const ComaPortalFlow: React.FC<ComaPortalFlowProps> = ({
   onLock,
   onProceedToDashboard
 }) => {
-  const { createProject, submitApproval, projects, setSelectedProjectId } = useApp();
+  const { createProject, deleteProject, submitApproval, projects, setSelectedProjectId } = useApp();
 
   const [step, setStep] = useState<'select_ulb_type' | 'proposal_screen'>(
     initialUlbType && initialStep === 'proposal_screen' ? 'proposal_screen' : 'select_ulb_type'
@@ -100,6 +97,7 @@ export const ComaPortalFlow: React.FC<ComaPortalFlowProps> = ({
   const ulbDropdownRef = useRef<HTMLDivElement>(null);
 
   const [showProposalForm, setShowProposalForm] = useState<boolean>(false);
+  const [activeMinimalView, setActiveMinimalView] = useState<ActiveMinimalView>('menu');
   const [lastCreatedProposalId, setLastCreatedProposalId] = useState<string | null>(null);
   const [viewingFlowProposalId, setViewingFlowProposalId] = useState<string | null>(null);
   const [proposalStageMap, setProposalStageMap] = useState<Record<string, number>>({});
@@ -181,6 +179,7 @@ export const ComaPortalFlow: React.FC<ComaPortalFlowProps> = ({
     if (!selectedUlbType || !selectedUlbEntity) return;
     setStep('proposal_screen');
     setShowProposalForm(false);
+    setActiveMinimalView('menu');
     setLastCreatedProposalId(null);
     try {
       sessionStorage.setItem('gudm_plms_coma_step', 'proposal_screen');
@@ -514,8 +513,13 @@ export const ComaPortalFlow: React.FC<ComaPortalFlowProps> = ({
             <button
               type="button"
               onClick={() => {
-                if (showProposalForm) {
+                if (viewingFlowProposalId) {
+                  setViewingFlowProposalId(null);
+                  setActiveMinimalView('submitted_proposals');
+                } else if (showProposalForm) {
                   setShowProposalForm(false);
+                } else if (activeMinimalView !== 'menu') {
+                  setActiveMinimalView('menu');
                 } else {
                   setStep('select_ulb_type');
                   try {
@@ -529,7 +533,11 @@ export const ComaPortalFlow: React.FC<ComaPortalFlowProps> = ({
             >
               <ArrowLeft className="w-3 h-3" />
               <span>
-                {showProposalForm ? 'Back to Proposal Options' : 'Back to ULB Selection'}
+                {viewingFlowProposalId
+                  ? 'Back to Submitted Proposals'
+                  : showProposalForm || activeMinimalView !== 'menu'
+                  ? 'Back to Portal'
+                  : 'Back to ULB Selection'}
               </span>
             </button>
             <button
@@ -573,7 +581,11 @@ export const ComaPortalFlow: React.FC<ComaPortalFlowProps> = ({
       </header>
 
       {/* Main Content Area */}
-      <div className="w-full max-w-3xl mx-auto px-6 my-auto py-8">
+      <div
+        className={`w-full mx-auto px-6 my-auto ${
+          viewingFlowProposal ? 'max-w-6xl py-3' : 'max-w-3xl py-8'
+        }`}
+      >
         {viewingFlowProposal ? (
           <ProposalLifecycleFlowView
             project={viewingFlowProposal}
@@ -584,7 +596,10 @@ export const ComaPortalFlow: React.FC<ComaPortalFlowProps> = ({
                 [viewingFlowProposal.id]: nextIdx
               }))
             }
-            onBack={() => setViewingFlowProposalId(null)}
+            onBack={() => {
+              setViewingFlowProposalId(null);
+              setActiveMinimalView('submitted_proposals');
+            }}
             onOpenFullDashboard={() => {
               setSelectedProjectId(viewingFlowProposal.id);
               onProceedToDashboard();
@@ -621,62 +636,22 @@ export const ComaPortalFlow: React.FC<ComaPortalFlowProps> = ({
               ulbName={activeUlbName}
               ulbType={selectedUlbType}
               district={proposalForm.district}
-              registeredProposalsCount={comaProposals.length}
+              submittedProposals={comaProposals}
+              proposalStageMap={proposalStageMap}
+              activeView={activeMinimalView}
+              onChangeActiveView={setActiveMinimalView}
               onOpenRegisterProposal={() => setShowProposalForm(true)}
+              onSelectProposal={proposalId => setViewingFlowProposalId(proposalId)}
+              onDeleteProposal={proposalId => {
+                deleteProject(proposalId);
+                if (lastCreatedProposalId === proposalId) {
+                  setLastCreatedProposalId(null);
+                }
+                if (viewingFlowProposalId === proposalId) {
+                  setViewingFlowProposalId(null);
+                }
+              }}
             />
-
-            {/* Recent Proposals List (Only for the selected Municipal Corporation / Municipality) */}
-            {comaProposals.length > 0 && (
-              <div className="rounded-xl border border-slate-200 bg-white shadow-2xs overflow-hidden">
-                <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#0E355C]">
-                    Registered Proposals ({comaProposals.length})
-                  </span>
-                  <button
-                    type="button"
-                    onClick={onProceedToDashboard}
-                    className="text-xs font-semibold text-blue-800 hover:underline transition-colors cursor-pointer"
-                  >
-                    Open Full Registry &rarr;
-                  </button>
-                </div>
-                <div className="divide-y divide-slate-200 max-h-60 overflow-y-auto">
-                  {comaProposals.slice(0, 5).map(proj => {
-                    const stepIdx = proposalStageMap[proj.id] ?? 1;
-                    const stageLabel =
-                      stepIdx >= PROPOSAL_LIFECYCLE_STAGES.length
-                        ? 'Project Handover Completed'
-                        : PROPOSAL_LIFECYCLE_STAGES[stepIdx]?.title || proj.currentStage;
-                    return (
-                      <div
-                        key={proj.id}
-                        onClick={() => setViewingFlowProposalId(proj.id)}
-                        className="px-4 py-3 flex items-center justify-between gap-4 hover:bg-blue-50/40 transition-colors cursor-pointer text-xs"
-                      >
-                        <div className="min-w-0">
-                          <div className="font-bold text-slate-900 truncate">{proj.name}</div>
-                          <div className="text-slate-500 mt-0.5 flex flex-wrap items-center gap-1.5">
-                            <span className="font-mono font-semibold text-[#0E355C]">{proj.id}</span>
-                            <span aria-hidden="true">·</span>
-                            <span>{proj.ulb}</span>
-                            <span aria-hidden="true">·</span>
-                            <span>{proj.category}</span>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="font-mono font-bold text-slate-900">
-                            ₹ {(Number(proj.estimatedCost) || 0).toFixed(1)} Cr
-                          </div>
-                          <div className="text-[11px] font-medium text-[#0E355C]">
-                            {stageLabel} &rarr;
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         ) : (
           /* Proposal Registration Form */

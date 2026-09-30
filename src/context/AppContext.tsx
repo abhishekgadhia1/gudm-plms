@@ -80,6 +80,7 @@ interface AppContextType {
 
   // 15 Interactive Demo Action Methods
   createProject: (newProject: Partial<ProjectMaster>) => ProjectMaster;
+  deleteProject: (projectId: string) => void;
   moveProjectStage: (projectId: string, newStage: ProjectStage, remarks: string) => void;
   createRfp: (rfpData: Partial<RFPRecord>) => RFPRecord;
   evaluateBid: (rfpId: string, bidId: string, status: 'L1 (Preferred)' | 'L2' | 'Disqualified' | 'Technically Qualified', remarks: string) => void;
@@ -313,6 +314,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications(prev => [notif, ...prev]);
 
     return newPrj;
+  };
+
+  // Delete Project
+  const deleteProject = (projectId: string) => {
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+    setApprovals(prev => prev.filter(a => a.projectId !== projectId));
+    setNotifications(prev => prev.filter(n => n.projectId !== projectId));
+    if (selectedProjectId === projectId) {
+      setSelectedProjectId(null);
+    }
   };
 
   // 2. Move Project Stage
@@ -865,6 +876,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       approvals,
       notifications,
       createProject,
+      deleteProject,
       moveProjectStage,
       createRfp,
       evaluateBid,

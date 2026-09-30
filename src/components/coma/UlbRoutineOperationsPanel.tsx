@@ -3,33 +3,55 @@ import {
   FilePlus2,
   Briefcase,
   IndianRupee,
+  FileText,
   FileCheck2,
+  Gavel,
   ArrowLeft,
-  CheckCircle2,
-  Plus
+  Trash2
 } from 'lucide-react';
 import { ComaUlbCategory } from './ComaPortalFlow';
+import {
+  ProposalProjectSummary,
+  PROPOSAL_LIFECYCLE_STAGES
+} from './ProposalLifecycleFlowView';
+import { StageSoftCopyModal } from './StageSoftCopyModal';
+
+export type ActiveMinimalView =
+  | 'menu'
+  | 'ongoing_works'
+  | 'grants_uc'
+  | 'submitted_proposals'
+  | 'dpr'
+  | 'tenders_work_orders';
 
 interface UlbRoutineOperationsPanelProps {
   ulbName: string;
   ulbType: ComaUlbCategory | '';
   district: string;
-  registeredProposalsCount: number;
+  submittedProposals: ProposalProjectSummary[];
+  proposalStageMap: Record<string, number>;
+  activeView: ActiveMinimalView;
+  onChangeActiveView: (view: ActiveMinimalView) => void;
   onOpenRegisterProposal: () => void;
+  onSelectProposal: (proposalId: string) => void;
+  onDeleteProposal: (proposalId: string) => void;
 }
-
-type ActiveMinimalView = 'menu' | 'ongoing_works' | 'grants_uc' | 'resolutions';
 
 export const UlbRoutineOperationsPanel: React.FC<UlbRoutineOperationsPanelProps> = ({
   ulbName,
   ulbType,
   district,
-  onOpenRegisterProposal
+  submittedProposals,
+  proposalStageMap,
+  activeView,
+  onChangeActiveView,
+  onOpenRegisterProposal,
+  onSelectProposal,
+  onDeleteProposal
 }) => {
   const isCorp = ulbType === 'Municipal Corporation';
-  const [activeView, setActiveView] = useState<ActiveMinimalView>('menu');
 
-  const [works, setWorks] = useState([
+  const [works] = useState([
     {
       id: 'WRK-01',
       title: 'Water Supply Distribution Network & Valve Upgrade',
@@ -71,32 +93,161 @@ export const UlbRoutineOperationsPanel: React.FC<UlbRoutineOperationsPanelProps>
     }
   ]);
 
-  const [resolutions, setResolutions] = useState([
+  const [selectedDprProject, setSelectedDprProject] = useState<ProposalProjectSummary | null>(
+    null
+  );
+  const [selectedTenderProject, setSelectedTenderProject] =
+    useState<ProposalProjectSummary | null>(null);
+
+  const defaultDprs: ProposalProjectSummary[] = [
     {
-      no: 'SC/2026/084',
-      title: 'Standing Committee Sanction for Water Supply Augmentation',
-      date: '18 Sep 2026'
+      id: 'DPR-2026-01',
+      name: '24x7 Water Supply & Feeder Main Augmentation',
+      ulb: ulbName,
+      category: 'Water Supply & Sewerage',
+      estimatedCost: isCorp ? 42.5 : 8.4
     },
     {
-      no: 'GB/2026/041',
-      title: 'General Board Approval for Annual Civil & O&M Rate Contract',
-      date: '05 Sep 2026'
+      id: 'DPR-2026-02',
+      name: 'Stormwater Trunk Drain & Pumping Station',
+      ulb: ulbName,
+      category: 'Stormwater Drainage',
+      estimatedCost: isCorp ? 28.0 : 5.6
+    },
+    {
+      id: 'DPR-2026-03',
+      name: 'Smart CCMS Streetlight & Urban Road Upgradation',
+      ulb: ulbName,
+      category: 'Urban Roads & Bridges',
+      estimatedCost: isCorp ? 19.2 : 4.1
     }
-  ]);
+  ];
 
-  const [newResNo, setNewResNo] = useState('');
-  const [newResTitle, setNewResTitle] = useState('');
+  const allDprs: ProposalProjectSummary[] = [...submittedProposals, ...defaultDprs];
 
-  const handleAddResolution = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newResNo.trim() || !newResTitle.trim()) return;
-    setResolutions([
-      { no: newResNo.trim(), title: newResTitle.trim(), date: 'Today' },
-      ...resolutions
-    ]);
-    setNewResNo('');
-    setNewResTitle('');
-  };
+  if (activeView === 'dpr') {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
+        <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-100">
+          <div>
+            <p className="text-xs font-semibold text-[#0E355C]">{ulbName}</p>
+            <h3 className="text-lg font-bold text-slate-900 mt-0.5">
+              Detailed Project Reports (DPRs) ({allDprs.length})
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChangeActiveView('menu')}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#0E355C] cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back</span>
+          </button>
+        </div>
+
+        <div className="divide-y divide-slate-100">
+          {allDprs.map(dpr => (
+            <div
+              key={dpr.id}
+              onClick={() => setSelectedDprProject(dpr)}
+              className="py-3.5 px-2 -mx-2 rounded-lg flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors cursor-pointer text-xs"
+            >
+              <div className="min-w-0">
+                <div className="font-semibold text-slate-900 truncate">{dpr.name}</div>
+                <div className="text-slate-500 mt-0.5 flex flex-wrap items-center gap-1.5">
+                  <span className="font-mono font-semibold text-[#0E355C]">{dpr.id}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{dpr.category}</span>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="font-mono font-semibold text-slate-900">
+                  ₹ {(Number(dpr.estimatedCost) || 0).toFixed(2)} Cr
+                </div>
+                <div className="text-[11px] font-medium text-[#0E355C]">
+                  View DPR Soft Copy &rarr;
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {selectedDprProject && (
+          <StageSoftCopyModal
+            stage={PROPOSAL_LIFECYCLE_STAGES[3]} // Stage 04: DPR Preparation
+            project={selectedDprProject}
+            isCompleted={true}
+            isCurrent={false}
+            onClose={() => setSelectedDprProject(null)}
+            onMarkComplete={() => setSelectedDprProject(null)}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (activeView === 'tenders_work_orders') {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
+        <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-100">
+          <div>
+            <p className="text-xs font-semibold text-[#0E355C]">{ulbName}</p>
+            <h3 className="text-lg font-bold text-slate-900 mt-0.5">
+              Tenders &amp; Work Orders ({allDprs.length})
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChangeActiveView('menu')}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#0E355C] cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back</span>
+          </button>
+        </div>
+
+        <div className="divide-y divide-slate-100">
+          {allDprs.map(item => (
+            <div
+              key={item.id}
+              onClick={() => setSelectedTenderProject(item)}
+              className="py-3.5 px-2 -mx-2 rounded-lg flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors cursor-pointer text-xs"
+            >
+              <div className="min-w-0">
+                <div className="font-semibold text-slate-900 truncate">{item.name}</div>
+                <div className="text-slate-500 mt-0.5 flex flex-wrap items-center gap-1.5">
+                  <span className="font-mono font-semibold text-[#0E355C]">
+                    NIT/{item.id}
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span>{item.category}</span>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="font-mono font-semibold text-slate-900">
+                  ₹ {(Number(item.estimatedCost) || 0).toFixed(2)} Cr
+                </div>
+                <div className="text-[11px] font-medium text-[#0E355C]">
+                  View Tender &amp; Work Order &rarr;
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {selectedTenderProject && (
+          <StageSoftCopyModal
+            stage={PROPOSAL_LIFECYCLE_STAGES[10]} // Stage 11: Tender Document Preparation
+            project={selectedTenderProject}
+            isCompleted={true}
+            isCurrent={false}
+            onClose={() => setSelectedTenderProject(null)}
+            onMarkComplete={() => setSelectedTenderProject(null)}
+          />
+        )}
+      </div>
+    );
+  }
 
   if (activeView === 'ongoing_works') {
     return (
@@ -104,11 +255,11 @@ export const UlbRoutineOperationsPanel: React.FC<UlbRoutineOperationsPanelProps>
         <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-100">
           <div>
             <p className="text-xs font-semibold text-[#0E355C]">{ulbName}</p>
-            <h3 className="text-lg font-bold text-slate-900 mt-0.5">Ongoing Municipal Works</h3>
+            <h3 className="text-lg font-bold text-slate-900 mt-0.5">Ongoing Works</h3>
           </div>
           <button
             type="button"
-            onClick={() => setActiveView('menu')}
+            onClick={() => onChangeActiveView('menu')}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#0E355C] cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -145,7 +296,7 @@ export const UlbRoutineOperationsPanel: React.FC<UlbRoutineOperationsPanelProps>
           </div>
           <button
             type="button"
-            onClick={() => setActiveView('menu')}
+            onClick={() => onChangeActiveView('menu')}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#0E355C] cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -193,19 +344,19 @@ export const UlbRoutineOperationsPanel: React.FC<UlbRoutineOperationsPanelProps>
     );
   }
 
-  if (activeView === 'resolutions') {
+  if (activeView === 'submitted_proposals') {
     return (
       <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
         <div className="flex items-center justify-between pb-4 mb-5 border-b border-slate-100">
           <div>
             <p className="text-xs font-semibold text-[#0E355C]">{ulbName}</p>
             <h3 className="text-lg font-bold text-slate-900 mt-0.5">
-              Standing Committee Resolutions
+              Submitted Proposals ({submittedProposals.length})
             </h3>
           </div>
           <button
             type="button"
-            onClick={() => setActiveView('menu')}
+            onClick={() => onChangeActiveView('menu')}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-[#0E355C] cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -213,42 +364,67 @@ export const UlbRoutineOperationsPanel: React.FC<UlbRoutineOperationsPanelProps>
           </button>
         </div>
 
-        <form onSubmit={handleAddResolution} className="flex flex-col sm:flex-row gap-2.5 mb-5 text-xs">
-          <input
-            type="text"
-            required
-            placeholder="Resolution No. (e.g. SC/2026/090)"
-            value={newResNo}
-            onChange={e => setNewResNo(e.target.value)}
-            className="sm:w-48 h-9 px-3 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0E355C]"
-          />
-          <input
-            type="text"
-            required
-            placeholder="Resolution subject..."
-            value={newResTitle}
-            onChange={e => setNewResTitle(e.target.value)}
-            className="flex-1 h-9 px-3 rounded-lg border border-slate-300 focus:outline-none focus:border-[#0E355C]"
-          />
-          <button
-            type="submit"
-            className="h-9 px-4 rounded-lg bg-[#0E355C] text-white font-semibold hover:bg-[#092644] shrink-0 cursor-pointer"
-          >
-            Add
-          </button>
-        </form>
-
-        <div className="divide-y divide-slate-100">
-          {resolutions.map(r => (
-            <div key={r.no} className="py-3.5 flex items-center justify-between gap-4 text-xs">
-              <div>
-                <div className="font-semibold text-slate-900">{r.title}</div>
-                <div className="font-mono text-slate-500 mt-0.5">{r.no}</div>
-              </div>
-              <span className="text-slate-500 shrink-0">{r.date}</span>
-            </div>
-          ))}
-        </div>
+        {submittedProposals.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-xs text-slate-500 mb-4">
+              No proposals have been registered for {ulbName} yet.
+            </p>
+            <button
+              type="button"
+              onClick={onOpenRegisterProposal}
+              className="h-9 px-4 rounded-lg bg-[#0E355C] text-white text-xs font-semibold hover:bg-[#092644] transition-colors cursor-pointer"
+            >
+              Register a Proposal
+            </button>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {submittedProposals.map(proj => {
+              const stepIdx = proposalStageMap[proj.id] ?? 1;
+              const stageLabel =
+                stepIdx >= PROPOSAL_LIFECYCLE_STAGES.length
+                  ? 'Project Handover Completed'
+                  : PROPOSAL_LIFECYCLE_STAGES[stepIdx]?.title || 'Preliminary Survey';
+              return (
+                <div
+                  key={proj.id}
+                  onClick={() => onSelectProposal(proj.id)}
+                  className="py-3.5 px-2 -mx-2 rounded-lg flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors cursor-pointer text-xs"
+                >
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-900 truncate">{proj.name}</div>
+                    <div className="text-slate-500 mt-0.5 flex flex-wrap items-center gap-1.5">
+                      <span className="font-mono font-semibold text-[#0E355C]">{proj.id}</span>
+                      <span aria-hidden="true">·</span>
+                      <span>{proj.category}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <div className="font-mono font-semibold text-slate-900">
+                        ₹ {(Number(proj.estimatedCost) || 0).toFixed(1)} Cr
+                      </div>
+                      <div className="text-[11px] font-medium text-[#0E355C]">
+                        {stageLabel} &rarr;
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      title="Delete submitted proposal"
+                      onClick={e => {
+                        e.stopPropagation();
+                        onDeleteProposal(proj.id);
+                      }}
+                      className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   }
@@ -257,11 +433,8 @@ export const UlbRoutineOperationsPanel: React.FC<UlbRoutineOperationsPanelProps>
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
       <div className="text-center mb-6">
-        <p className="text-xs font-semibold text-[#0E355C]">
+        <h2 className="text-lg sm:text-xl font-bold text-[#0E355C]">
           {ulbName} · {district}
-        </p>
-        <h2 className="text-xl font-bold text-slate-900 mt-1">
-          Select Municipal Action
         </h2>
       </div>
 
@@ -272,7 +445,7 @@ export const UlbRoutineOperationsPanel: React.FC<UlbRoutineOperationsPanelProps>
           onClick={onOpenRegisterProposal}
           className="p-5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#0E355C] transition-all text-left flex items-start gap-3.5 cursor-pointer group"
         >
-          <div className="w-10 h-10 rounded-lg bg-[#0E355C] text-white flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-slate-200/80 text-[#0E355C] group-hover:bg-[#0E355C] group-hover:text-white transition-colors flex items-center justify-center shrink-0">
             <FilePlus2 className="w-5 h-5" />
           </div>
           <div>
@@ -286,7 +459,7 @@ export const UlbRoutineOperationsPanel: React.FC<UlbRoutineOperationsPanelProps>
         {/* Card 2: Ongoing Works */}
         <button
           type="button"
-          onClick={() => setActiveView('ongoing_works')}
+          onClick={() => onChangeActiveView('ongoing_works')}
           className="p-5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#0E355C] transition-all text-left flex items-start gap-3.5 cursor-pointer group"
         >
           <div className="w-10 h-10 rounded-lg bg-slate-200/80 text-[#0E355C] group-hover:bg-[#0E355C] group-hover:text-white transition-colors flex items-center justify-center shrink-0">
@@ -303,7 +476,7 @@ export const UlbRoutineOperationsPanel: React.FC<UlbRoutineOperationsPanelProps>
         {/* Card 3: Grant & UC Status */}
         <button
           type="button"
-          onClick={() => setActiveView('grants_uc')}
+          onClick={() => onChangeActiveView('grants_uc')}
           className="p-5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#0E355C] transition-all text-left flex items-start gap-3.5 cursor-pointer group"
         >
           <div className="w-10 h-10 rounded-lg bg-slate-200/80 text-[#0E355C] group-hover:bg-[#0E355C] group-hover:text-white transition-colors flex items-center justify-center shrink-0">
@@ -317,19 +490,59 @@ export const UlbRoutineOperationsPanel: React.FC<UlbRoutineOperationsPanelProps>
           </div>
         </button>
 
-        {/* Card 4: Standing Committee Resolutions */}
+        {/* Card 4: Submitted Proposals */}
         <button
           type="button"
-          onClick={() => setActiveView('resolutions')}
+          onClick={() => onChangeActiveView('submitted_proposals')}
+          className="p-5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#0E355C] transition-all text-left flex items-start gap-3.5 cursor-pointer group"
+        >
+          <div className="w-10 h-10 rounded-lg bg-slate-200/80 text-[#0E355C] group-hover:bg-[#0E355C] group-hover:text-white transition-colors flex items-center justify-center shrink-0">
+            <FileText className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#0E355C]">
+              Submitted Proposals{submittedProposals.length > 0 ? ` (${submittedProposals.length})` : ''}
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+              View already registered proposals and their lifecycle flow
+            </p>
+          </div>
+        </button>
+
+        {/* Card 5: DPR */}
+        <button
+          type="button"
+          onClick={() => onChangeActiveView('dpr')}
           className="p-5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#0E355C] transition-all text-left flex items-start gap-3.5 cursor-pointer group"
         >
           <div className="w-10 h-10 rounded-lg bg-slate-200/80 text-[#0E355C] group-hover:bg-[#0E355C] group-hover:text-white transition-colors flex items-center justify-center shrink-0">
             <FileCheck2 className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#0E355C]">Committee Resolutions</h3>
+            <h3 className="text-sm font-bold text-[#0E355C]">
+              DPR ({allDprs.length})
+            </h3>
             <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-              Record Standing Committee &amp; General Board approvals
+              View all Detailed Project Reports (DPRs) and open their soft copies
+            </p>
+          </div>
+        </button>
+
+        {/* Card 6: Tenders & Work Orders */}
+        <button
+          type="button"
+          onClick={() => onChangeActiveView('tenders_work_orders')}
+          className="p-5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#0E355C] transition-all text-left flex items-start gap-3.5 cursor-pointer group"
+        >
+          <div className="w-10 h-10 rounded-lg bg-slate-200/80 text-[#0E355C] group-hover:bg-[#0E355C] group-hover:text-white transition-colors flex items-center justify-center shrink-0">
+            <Gavel className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-[#0E355C]">
+              Tenders &amp; Work Orders ({allDprs.length})
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+              View published e-Tenders, DTPs, and issued Work Orders
             </p>
           </div>
         </button>

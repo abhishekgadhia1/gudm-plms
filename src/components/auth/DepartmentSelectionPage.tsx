@@ -237,20 +237,20 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
         </div>
 
         {/* RIGHT HALF: Centered in the Right 50% of the Screen */}
-        <div className="w-full flex flex-col items-center justify-center px-6 py-10 md:px-12">
-          <div className="w-full max-w-lg">
-            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8">
-              <div className="mb-6">
-                <h2 className="text-lg sm:text-xl font-bold text-[#0E355C] tracking-tight">
+        <div className="w-full flex flex-col items-center justify-center px-6 py-8 md:px-12">
+          <div className="w-full max-w-md">
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-5 sm:p-6">
+              <div className="mb-4">
+                <h2 className="text-base sm:text-lg font-bold text-[#0E355C] tracking-tight">
                   Officer Designation &amp; Department
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Select your designation and department from the dropdowns below to proceed
                 </p>
               </div>
 
               {/* Designation and Department Dropdown Boxes */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {/* Box 1: Designation Dropdown */}
                 <div ref={designationDropdownRef} className="relative w-full">
                   <button
@@ -259,7 +259,7 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
                       setIsDesignationOpen(!isDesignationOpen);
                       setIsDepartmentOpen(false);
                     }}
-                    className={`w-full h-14 px-4 rounded-xl border flex items-center justify-between text-left transition-all duration-200 cursor-pointer ${
+                    className={`w-full h-12 px-3.5 rounded-xl border flex items-center justify-between text-left transition-all duration-200 cursor-pointer ${
                       isDesignationOpen
                         ? 'border-[#0E355C] bg-blue-50/30 ring-2 ring-[#0E355C]/15 shadow-xs'
                         : selectedDesignation
@@ -268,11 +268,11 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
                     }`}
                   >
                     <div className="truncate pr-2">
-                      <span className="block text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                      <span className="block text-[9px] uppercase font-bold tracking-wider text-slate-500">
                         Designation
                       </span>
                       <span
-                        className={`text-sm font-semibold truncate block ${
+                        className={`text-xs sm:text-sm font-semibold truncate block ${
                           selectedDesignation ? 'text-[#0E355C]' : 'text-slate-400'
                         }`}
                       >
@@ -297,14 +297,14 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
                               key={desig.id}
                               type="button"
                               onClick={() => handleSelectDesignation(desig)}
-                              className={`w-full text-left px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
                                 isSelected
                                   ? 'bg-blue-50 text-[#0E355C] font-bold'
                                   : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                               }`}
                             >
                               <span className="truncate mr-2">{desig.name}</span>
-                              {isSelected && <Check className="w-4 h-4 text-[#0E355C] shrink-0" />}
+                              {isSelected && <Check className="w-3.5 h-3.5 text-[#0E355C] shrink-0" />}
                             </button>
                           );
                         })}
@@ -321,7 +321,7 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
                       setIsDepartmentOpen(!isDepartmentOpen);
                       setIsDesignationOpen(false);
                     }}
-                    className={`w-full h-14 px-4 rounded-xl border flex items-center justify-between text-left transition-all duration-200 cursor-pointer ${
+                    className={`w-full h-12 px-3.5 rounded-xl border flex items-center justify-between text-left transition-all duration-200 cursor-pointer ${
                       isDepartmentOpen
                         ? 'border-[#0E355C] bg-blue-50/30 ring-2 ring-[#0E355C]/15 shadow-xs'
                         : selectedDepartment
@@ -330,11 +330,11 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
                     }`}
                   >
                     <div className="truncate pr-2">
-                      <span className="block text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                      <span className="block text-[9px] uppercase font-bold tracking-wider text-slate-500">
                         Department
                       </span>
                       <span
-                        className={`text-sm font-semibold truncate block ${
+                        className={`text-xs sm:text-sm font-semibold truncate block ${
                           selectedDepartment ? 'text-[#0E355C]' : 'text-slate-400'
                         }`}
                       >
@@ -361,7 +361,7 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
                               key={dept.id}
                               type="button"
                               onClick={() => handleSelectDepartment(dept)}
-                              className={`w-full text-left px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
                                 isSelected
                                   ? 'bg-blue-50 text-[#0E355C] font-bold'
                                   : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
@@ -370,7 +370,7 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
                               <div className="truncate mr-2">
                                 <span className="font-semibold text-[#0E355C]">{dept.description}</span>
                               </div>
-                              {isSelected && <Check className="w-4 h-4 text-[#0E355C] shrink-0" />}
+                              {isSelected && <Check className="w-3.5 h-3.5 text-[#0E355C] shrink-0" />}
                             </button>
                           );
                         })}
@@ -383,11 +383,11 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
 
             {/* Outside of the Box: Username & Password Row (appears once Department is selected) */}
             {selectedDepartment && (
-              <div className="mt-5">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="mt-4">
+                <div className="grid grid-cols-2 gap-3">
                   {/* Column 1: Username */}
                   <div>
-                    <label className="block text-xs font-bold text-[#0E355C] mb-1.5 pl-1">
+                    <label className="block text-xs font-bold text-[#0E355C] mb-1 pl-1">
                       Username
                     </label>
                     <input
@@ -403,7 +403,7 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
                         }
                       }}
                       placeholder="Enter Username"
-                      className={`w-full h-12 px-4 rounded-xl border bg-white text-sm font-semibold text-[#0E355C] placeholder:text-slate-400 placeholder:font-normal shadow-2xs focus:outline-none transition-all ${
+                      className={`w-full h-10 px-3.5 rounded-xl border bg-white text-xs sm:text-sm font-semibold text-[#0E355C] placeholder:text-slate-400 placeholder:font-normal shadow-2xs focus:outline-none transition-all ${
                         authError
                           ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/15'
                           : 'border-slate-300 focus:border-[#0E355C] focus:ring-2 focus:ring-[#0E355C]/15'
@@ -413,7 +413,7 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
 
                   {/* Column 2: Password */}
                   <div>
-                    <label className="block text-xs font-bold text-[#0E355C] mb-1.5 pl-1">
+                    <label className="block text-xs font-bold text-[#0E355C] mb-1 pl-1">
                       Password
                     </label>
                     <input
@@ -429,7 +429,7 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
                         }
                       }}
                       placeholder="Enter Password"
-                      className={`w-full h-12 px-4 rounded-xl border bg-white text-sm font-semibold text-[#0E355C] placeholder:text-slate-400 placeholder:font-normal shadow-2xs focus:outline-none transition-all ${
+                      className={`w-full h-10 px-3.5 rounded-xl border bg-white text-xs sm:text-sm font-semibold text-[#0E355C] placeholder:text-slate-400 placeholder:font-normal shadow-2xs focus:outline-none transition-all ${
                         authError
                           ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/15'
                           : 'border-slate-300 focus:border-[#0E355C] focus:ring-2 focus:ring-[#0E355C]/15'
@@ -447,12 +447,12 @@ export const DepartmentSelectionPage: React.FC<DepartmentSelectionPageProps> = (
             )}
 
             {/* Submit / Continue Button */}
-            <div className="mt-5">
+            <div className="mt-4">
               <button
                 type="button"
                 onClick={handleContinue}
                 disabled={!canContinue}
-                className={`w-full h-11 px-8 rounded-xl font-semibold text-xs sm:text-sm tracking-wide transition-all duration-200 flex items-center justify-center gap-2 ${
+                className={`w-full h-10 px-6 rounded-xl font-semibold text-xs sm:text-sm tracking-wide transition-all duration-200 flex items-center justify-center gap-2 ${
                   canContinue
                     ? 'bg-[#0E355C] text-white hover:bg-[#092644] shadow-sm cursor-pointer'
                     : 'bg-slate-200/80 text-slate-400 border border-slate-300/80 cursor-not-allowed'
