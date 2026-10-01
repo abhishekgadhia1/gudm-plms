@@ -110,10 +110,10 @@ export const ExecutiveDashboard: React.FC = () => {
 
             {/* Authentic Real Gujarat Title */}
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0E355C] tracking-tight">
-              Gujarat Urban Infrastructure Project Monitoring
+              Project Lifecycle Management System Dashboard
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 mt-1 font-medium">
-              33 Districts &bull; 17 Municipal Corporations &bull; 157 Municipalities
+              33 Districts &bull; 17 Municipal Corporations &bull; 152 Municipalities
             </p>
           </div>
 

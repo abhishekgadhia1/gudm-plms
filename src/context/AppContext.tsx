@@ -143,45 +143,72 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem(STORAGE_PREFIX + 'selectedSubDepartment', selectedSubDepartment);
   }, [selectedSubDepartment]);
 
-  // Stored states with fallback
+  // Helper to replace 'buildinh' with 'building' in stored records
+  const fixBuildinhTypo = <T,>(data: T): T => {
+    try {
+      const raw = JSON.stringify(data);
+      if (!/buildinh/i.test(raw)) return data;
+      const fixed = raw
+        .replace(/BUILDINH/g, 'BUILDING')
+        .replace(/Buildinh/g, 'Building')
+        .replace(/buildinh/gi, 'building');
+      return JSON.parse(fixed);
+    } catch {
+      return data;
+    }
+  };
+
+  // Stored states with fallback (merging any newly added INITIAL_PROJECTS)
   const [projects, setProjects] = useState<ProjectMaster[]>(() => {
     const saved = localStorage.getItem(STORAGE_PREFIX + 'projects');
-    return saved ? JSON.parse(saved) : INITIAL_PROJECTS;
+    if (saved) {
+      try {
+        const parsed: ProjectMaster[] = fixBuildinhTypo(JSON.parse(saved));
+        if (Array.isArray(parsed)) {
+          const existingIds = new Set(parsed.map(p => p.id));
+          const missingInitial = INITIAL_PROJECTS.filter(p => !existingIds.has(p.id));
+          return [...parsed, ...missingInitial];
+        }
+      } catch {
+        // fallback to INITIAL_PROJECTS
+      }
+    }
+    return INITIAL_PROJECTS;
   });
 
   const [rfps, setRfps] = useState<RFPRecord[]>(() => {
     const saved = localStorage.getItem(STORAGE_PREFIX + 'rfps');
-    return saved ? JSON.parse(saved) : INITIAL_RFPS;
+    return saved ? fixBuildinhTypo(JSON.parse(saved)) : INITIAL_RFPS;
   });
 
   const [contracts, setContracts] = useState<ContractRecord[]>(() => {
     const saved = localStorage.getItem(STORAGE_PREFIX + 'contracts');
-    return saved ? JSON.parse(saved) : INITIAL_CONTRACTS;
+    return saved ? fixBuildinhTypo(JSON.parse(saved)) : INITIAL_CONTRACTS;
   });
 
   const [inspections, setInspections] = useState<SiteInspection[]>(() => {
     const saved = localStorage.getItem(STORAGE_PREFIX + 'inspections');
-    return saved ? JSON.parse(saved) : INITIAL_INSPECTIONS;
+    return saved ? fixBuildinhTypo(JSON.parse(saved)) : INITIAL_INSPECTIONS;
   });
 
   const [issuesRisks, setIssuesRisks] = useState<IssueRisk[]>(() => {
     const saved = localStorage.getItem(STORAGE_PREFIX + 'issuesRisks');
-    return saved ? JSON.parse(saved) : INITIAL_ISSUES_RISKS;
+    return saved ? fixBuildinhTypo(JSON.parse(saved)) : INITIAL_ISSUES_RISKS;
   });
 
   const [documents, setDocuments] = useState<DocumentRecord[]>(() => {
     const saved = localStorage.getItem(STORAGE_PREFIX + 'documents');
-    return saved ? JSON.parse(saved) : INITIAL_DOCUMENTS;
+    return saved ? fixBuildinhTypo(JSON.parse(saved)) : INITIAL_DOCUMENTS;
   });
 
   const [approvals, setApprovals] = useState<ApprovalItem[]>(() => {
     const saved = localStorage.getItem(STORAGE_PREFIX + 'approvals');
-    return saved ? JSON.parse(saved) : INITIAL_APPROVALS;
+    return saved ? fixBuildinhTypo(JSON.parse(saved)) : INITIAL_APPROVALS;
   });
 
   const [notifications, setNotifications] = useState<NotificationItem[]>(() => {
     const saved = localStorage.getItem(STORAGE_PREFIX + 'notifications');
-    return saved ? JSON.parse(saved) : INITIAL_NOTIFICATIONS;
+    return saved ? fixBuildinhTypo(JSON.parse(saved)) : INITIAL_NOTIFICATIONS;
   });
 
   // Sync state to local storage for persistence across reloads

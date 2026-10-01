@@ -411,7 +411,7 @@ export const ComaPortalFlow: React.FC<ComaPortalFlowProps> = ({
                     નગરપાલિકા
                   </p>
                   <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                    157 Municipalities across Gujarat state under regional municipal administration
+                    152 Municipalities across Gujarat state under regional municipal administration
                   </p>
                 </div>
               </button>
